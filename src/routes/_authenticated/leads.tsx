@@ -68,6 +68,7 @@ type Lead = {
   orders_annual: number | null;
   sugarcrm_url: string | null;
   review_reason: string | null;
+  firmographics: Record<string, unknown> | null;
 };
 
 type SortKey = "company_name" | "score_total" | "status" | "asendia_icp_segment";
@@ -121,7 +122,7 @@ function LeadRankingPage() {
       const { data, error } = await supabase
         .from("leads")
         .select(
-          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_confidence, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason",
+          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_confidence, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason, firmographics",
         )
         .eq("account_id", accountId!)
         .order("score_total", { ascending: false, nullsFirst: false });
@@ -465,8 +466,23 @@ function LeadDetail({ lead }: { lead: Lead }) {
           </dl>
         </section>
 
+        {lead.firmographics && Object.keys(lead.firmographics).length > 0 && (
+          <section>
+            <SectionTitle>Firmographics (ZoomInfo)</SectionTitle>
+            <dl className="mt-2 grid grid-cols-2 gap-3">
+              {Object.entries(lead.firmographics).map(([key, value]) => (
+                <Field
+                  key={key}
+                  label={humanizeKey(key)}
+                  value={formatFirmographicValue(value)}
+                />
+              ))}
+            </dl>
+          </section>
+        )}
+
         <section>
-          <SectionTitle>Firmographics</SectionTitle>
+          <SectionTitle>ECDB metrics</SectionTitle>
           <dl className="mt-2 grid grid-cols-2 gap-3">
             <Field
               label="Intl. revenue share"
@@ -550,4 +566,28 @@ function Field({
       </dd>
     </div>
   );
+}
+
+function humanizeKey(key: string) {
+  const map: Record<string, string> = {
+    hq: "HQ",
+    revenue_gbp: "Revenue (GBP)",
+    revenue_usd: "Revenue (USD)",
+    revenue_eur: "Revenue (EUR)",
+  };
+  if (map[key]) return map[key];
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatFirmographicValue(value: unknown): string | number | null {
+  if (value == null) return null;
+  if (typeof value === "number") return value.toLocaleString();
+  if (typeof value === "string" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
