@@ -75,6 +75,10 @@ function deriveDataSource(missingEcdb: boolean | null | undefined, aiAssist: unk
 export const Route = createFileRoute("/api/public/ingest-leads")({
   server: {
     handlers: {
+      GET: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PUT: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PATCH: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      DELETE: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
       OPTIONS: async () =>
         new Response(null, {
           status: 204,
