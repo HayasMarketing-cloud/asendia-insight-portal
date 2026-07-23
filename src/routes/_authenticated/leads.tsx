@@ -122,7 +122,7 @@ function LeadRankingPage() {
       const { data, error } = await supabase
         .from("leads")
         .select(
-          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_confidence, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason",
+          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_confidence, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason, firmographics",
         )
         .eq("account_id", accountId!)
         .order("score_total", { ascending: false, nullsFirst: false });
