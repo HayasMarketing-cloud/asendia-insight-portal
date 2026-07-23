@@ -466,8 +466,23 @@ function LeadDetail({ lead }: { lead: Lead }) {
           </dl>
         </section>
 
+        {lead.firmographics && Object.keys(lead.firmographics).length > 0 && (
+          <section>
+            <SectionTitle>Firmographics (ZoomInfo)</SectionTitle>
+            <dl className="mt-2 grid grid-cols-2 gap-3">
+              {Object.entries(lead.firmographics).map(([key, value]) => (
+                <Field
+                  key={key}
+                  label={humanizeKey(key)}
+                  value={formatFirmographicValue(value)}
+                />
+              ))}
+            </dl>
+          </section>
+        )}
+
         <section>
-          <SectionTitle>Firmographics</SectionTitle>
+          <SectionTitle>ECDB metrics</SectionTitle>
           <dl className="mt-2 grid grid-cols-2 gap-3">
             <Field
               label="Intl. revenue share"
