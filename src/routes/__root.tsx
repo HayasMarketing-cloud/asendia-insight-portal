@@ -92,6 +92,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Hayas Client Portal" },
+      { name: "twitter:description", content: "Hayas Marketing client portal — B2B strategic marketing intelligence and Lead Accelerator dashboards." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1811c58b-3958-4439-a81e-072a7528c5f2/id-preview-cd67fcd7--cc6fc6eb-e6cf-41a3-bd60-8817902bfa38.lovable.app-1784793766969.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1811c58b-3958-4439-a81e-072a7528c5f2/id-preview-cd67fcd7--cc6fc6eb-e6cf-41a3-bd60-8817902bfa38.lovable.app-1784793766969.png" },
     ],
     links: [
       {
