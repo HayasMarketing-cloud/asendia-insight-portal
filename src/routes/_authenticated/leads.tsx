@@ -567,3 +567,27 @@ function Field({
     </div>
   );
 }
+
+function humanizeKey(key: string) {
+  const map: Record<string, string> = {
+    hq: "HQ",
+    revenue_gbp: "Revenue (GBP)",
+    revenue_usd: "Revenue (USD)",
+    revenue_eur: "Revenue (EUR)",
+  };
+  if (map[key]) return map[key];
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatFirmographicValue(value: unknown): string | number | null {
+  if (value == null) return null;
+  if (typeof value === "number") return value.toLocaleString();
+  if (typeof value === "string" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
