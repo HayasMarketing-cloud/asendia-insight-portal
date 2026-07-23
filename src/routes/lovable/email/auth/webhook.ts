@@ -43,11 +43,12 @@ const handler = createAuthEmailHandler({
         }),
     },
     magiclink: {
-      subject: 'Your login link',
+      subject: 'Your Hayas Client Portal sign-in code',
       render: (data) =>
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
           confirmationUrl: data.url,
+          token: data.token ?? '',
         }),
     },
     recovery: {
