@@ -36,6 +36,16 @@ async function fetchProfileWithAccount() {
       .eq("id", profile.account_id)
       .maybeSingle();
     account = acc;
+  } else if (profile.role === "hayas_admin") {
+    // Phase 1: hayas_admins are cross-account with no switcher yet.
+    // Default to the first (and currently only) account. RLS lets hayas_admins
+    // see all accounts. Future: replace with a stored selection.
+    const { data: accs } = await supabase
+      .from("accounts")
+      .select("id, name, slug")
+      .order("name", { ascending: true })
+      .limit(1);
+    account = accs?.[0] ?? null;
   }
   return { profile: profile as Profile, account };
 }
