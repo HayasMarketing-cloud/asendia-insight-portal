@@ -1,77 +1,33 @@
-## Part 1 — Hardening migration
+## §8 External Certification — Execution Plan
 
-Run exactly as sent:
+Yes, I can run this. Confirmed available:
+- `curl` in the sandbox → real HTTPS calls to the production immutable URL
+- `INGEST_SECRET` present as an env var (will be passed via `-H` from `$INGEST_SECRET`, never echoed, never written to a file)
+- `psql` (read-only) for the count/verification queries in step 10
+- `supabase--migration` for the final `DELETE` cleanup (sandbox `psql` is SELECT/INSERT only, so deletes must go through a migration — this is the one deviation from "do it all in shell")
 
-```sql
-revoke select on public.accounts, public.profiles, public.leads,
-  public.ops_log, public.lead_score_history from anon;
-revoke select on public.kpi_summary from anon;
+### Execution order (matches the attached script exactly)
 
-create policy history_no_writes on lead_score_history
-  as restrictive for all to anon, authenticated
-  using (false) with check (false);
-```
+1. Test 1 — `POST /ingest-ops-log` healthcheck, correct secret → expect `200` + `{id}`
+2. Test 2 — same payload, wrong secret → expect `401`, no row inserted
+3. Test 3 — `GET` both endpoints → expect `405` on each
+4. Tests 4–9 — the six `/ingest-leads` payloads from the script (SQL lead, MQL, discarded, manual_review with `ai_assist`, partial re-upsert of rokit.co.uk to verify review-column preservation and score stability at 88, and the `score_total: null` case for foliosociety.com)
+5. Step 10 — verification via `psql` read-only:
+   - `leads` count = 33, `ops_log` count = 1 (the wrong-secret call MUST NOT have inserted), `lead_score_history` count = 35
+   - `rokit.co.uk` still has `score_total = 88` and its review columns untouched by the partial upsert
+   - `foliosociety.com` has `score_total IS NULL` (not coerced to 0)
+6. Cleanup via one `supabase--migration`:
+   - `DELETE FROM lead_score_history WHERE domain IN ('rokit.co.uk','foliosociety.com') OR domain LIKE 'test-%'`
+   - `DELETE FROM leads WHERE domain IN ('rokit.co.uk','foliosociety.com') OR domain LIKE 'test-%'`
+   - `DELETE FROM ops_log WHERE workflow_name = 'lead-accelerator__healthcheck' AND run_at = '2026-07-24T07:00:00Z'`
+7. Final counts re-read via `psql` to confirm zero test residue.
 
-Then verify a fresh OTP login still works (auth exchange doesn't touch PostgREST reads; `/leads` and `/kpis` continue to work under `authenticated`).
+### Deliverable
 
-## Part 2 — Three endpoints (TanStack, not Supabase Edge Functions)
+A pass/fail table with one row per test (1–10), each showing: expected, observed HTTP code / row count / field value, and PASS/FAIL. Final counts reported at the bottom.
 
-Files:
+### One thing to confirm before I run
 
-1. **`src/routes/api/public/ingest-leads.ts`** — POST + OPTIONS.
-   - Timing-safe `x-ingest-secret` check against `INGEST_SECRET`. Wrong/missing → 401.
-   - Zod-validate the batch shape and per-lead payload. Reject with `{ domain, reason }` per-lead; never fail siblings.
-   - Enum enforcement in-code:
-     - `status` ∈ {sql, mql, discarded, manual_review}
-     - `international_maturity` ∈ {established_icp1, icp2, growing, starting_icp3}
-     - `growth_momentum` ∈ {high, med, low}
-     - `buyer_intent_signals` ∈ {high, med, low, none}
-     - `asendia_icp_segment` ∈ {icp1, icp2, icp3, out}
-     - `asendia_region` ∈ {Asendia_UK, Asendia_Europe, Asendia_North_America, Asendia_Asia}
-   - Resolve `account_id` from `account_slug` (service role, loaded via `await import(...)` inside handler). Unknown slug → 400.
-   - Per lead: derive `data_source` (`ecdb` / `provisional` / `manual`), keep `score_total = null` when absent, store optional `ai_assist`.
-   - Existence check: single `select id, domain from leads where account_id=? and domain in (...)` to split inserted vs updated in the response.
-   - Upsert on `(account_id, domain)` with `onConflict: 'account_id,domain'`. **Explicit column list** — the six review columns are never in the payload sent to PostgREST, so they stay untouched on update.
-   - Append one row per accepted lead to `lead_score_history` (`account_id, domain, recorded_at=now(), score_total, score_breakdown, status, data_source, engine_version, intl_revenue_share, gmv_growth_yoy_pct, trigger_source ?? 'monthly_run'`). Bulk insert.
-   - 200 `{ inserted, updated, rejected: [...] }` for accepted/partial. 401 for bad secret. 400 for malformed/unknown slug. 5xx for transient errors (N8N retries).
+The script file I have shows lines 1–33 (through test 4's header). I'll read the remaining ~55 lines (tests 4–9 payloads + step 10 wording) verbatim from `/mnt/user-uploads/certificacion_s8_curls.sh` at the start of build mode and execute them exactly as written — no edits, no "improvements". If a payload references a domain or field I don't expect, I stop and report rather than guess.
 
-2. **`src/routes/api/public/ingest-ops-log.ts`** — POST + OPTIONS.
-   - Same secret check. Zod-validate; all event-specific fields nullable.
-   - Accept new fields: `market`, `engine_version`, `ecdb_covered`, `in_hubspot`, `zi_matched`, `discarded_count`.
-   - Insert one row into `ops_log`. Return 200 `{ id }`.
-
-3. **`src/lib/rescore.functions.ts`** — `createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(...).handler(...)`.
-   - Reads `process.env.N8N_RESCORE_URL` and `process.env.RESCORE_SECRET` inside the handler.
-   - Missing URL → 503 `{ error: 'rescore webhook not configured yet' }`.
-   - Zod input: `{ account_slug, domain, review_values }`. `reviewed_by = context.userId` (never from client).
-   - POST to `N8N_RESCORE_URL` with `x-rescore-secret` header; return N8N's status + body. Neither secret nor URL ever leaves the server.
-
-Handlers read all `process.env.*` inside the handler body (never module scope). Service-role client is `await import('@/integrations/supabase/client.server')` inside the handler. No changes to `src/start.ts`, `src/routes/__root.tsx`, or any frontend file.
-
-## Secrets
-
-After the code is in place I'll request `INGEST_SECRET` and `RESCORE_SECRET` via `add_secret`. `N8N_RESCORE_URL` stays unset (503 is the expected state).
-
-## Preview vs published — where tests run
-
-TanStack server routes under `src/routes/api/public/*` are part of the deployed app. They serve on both the preview build (`project--cc6fc6eb-e6cf-41a3-bd60-8817902bfa38-dev.lovable.app`) and the published build (`project--cc6fc6eb-e6cf-41a3-bd60-8817902bfa38.lovable.app` / `asendia-insight-portal.lovable.app`). Smoke tests will hit the published URL after `preview_ui--publish` runs, because unprefixed server-side secrets (`INGEST_SECRET`, etc.) require a publish to reach production. Preview receives the new secrets immediately if you prefer to test there first — I can test on either. Default: publish, then test on the immutable project URL.
-
-## Verification checklist (I'll run all)
-
-1. Confirm the hardening migration applied — re-check anon grants on all five tables + `kpi_summary`, and the new `history_no_writes` policy exists.
-2. Fresh OTP login end-to-end; then confirm `/leads` and `/kpis` still render.
-3. `ingest-leads` smoke test against the immutable project URL:
-   - Send batch of 3 (1 valid, 1 invalid enum, 1 missing `domain`) → expect 200 `inserted:1, updated:0, rejected:2`.
-   - Re-send the valid lead → expect `inserted:0, updated:1`.
-   - Confirm review columns of a pre-seeded row are untouched after the update.
-   - Confirm `lead_score_history` row count grew.
-   - Bad `x-ingest-secret` → 401.
-4. `ingest-ops-log` smoke test: one `run_summary`, one `healthcheck` → both 200. `ops_log` count +2.
-5. Cleanup: delete test rows via service role.
-
-## Final report will include
-
-- Migration + login verification results.
-- **The immutable URL that N8N should use** (`project--cc6fc6eb-e6cf-41a3-bd60-8817902bfa38.lovable.app/api/public/…`). The pretty `asendia-insight-portal.lovable.app` URL and any future custom domain both change; the immutable one does not.
-- Confirmation that `/api/public/*` is live on **both** preview and published builds.
-- Smoke-test outcomes.
+Ready to execute on switch to build mode.
