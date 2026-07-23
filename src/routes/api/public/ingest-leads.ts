@@ -226,7 +226,7 @@ export const Route = createFileRoute("/api/public/ingest-leads")({
           }
           const { error: updErr } = await supabaseAdmin
             .from("leads")
-            .update(patch)
+            .update(patch as never)
             .eq("account_id", account_id)
             .eq("domain", a.lead.domain);
           if (updErr) return bad(500, { error: "update failed", detail: updErr.message });
