@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedKpisRouteImport } from './routes/_authenticated/kpis'
+import { Route as ApiPublicIngestOpsLogRouteImport } from './routes/api/public/ingest-ops-log'
 import { Route as ApiPublicIngestLeadsRouteImport } from './routes/api/public/ingest-leads'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -42,6 +43,11 @@ const AuthenticatedKpisRoute = AuthenticatedKpisRouteImport.update({
   path: '/kpis',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicIngestOpsLogRoute = ApiPublicIngestOpsLogRouteImport.update({
+  id: '/api/public/ingest-ops-log',
+  path: '/api/public/ingest-ops-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicIngestLeadsRoute = ApiPublicIngestLeadsRouteImport.update({
   id: '/api/public/ingest-leads',
   path: '/api/public/ingest-leads',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
+  '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
+  '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/_authenticated/kpis': typeof AuthenticatedKpisRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
+  '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/kpis'
     | '/leads'
     | '/api/public/ingest-leads'
+    | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/kpis'
     | '/leads'
     | '/api/public/ingest-leads'
+    | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/_authenticated/kpis'
     | '/_authenticated/leads'
     | '/api/public/ingest-leads'
+    | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -123,6 +135,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicIngestLeadsRoute: typeof ApiPublicIngestLeadsRoute
+  ApiPublicIngestOpsLogRoute: typeof ApiPublicIngestOpsLogRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/kpis'
       preLoaderRoute: typeof AuthenticatedKpisRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/ingest-ops-log': {
+      id: '/api/public/ingest-ops-log'
+      path: '/api/public/ingest-ops-log'
+      fullPath: '/api/public/ingest-ops-log'
+      preLoaderRoute: typeof ApiPublicIngestOpsLogRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/ingest-leads': {
       id: '/api/public/ingest-leads'
@@ -206,6 +226,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicIngestLeadsRoute: ApiPublicIngestLeadsRoute,
+  ApiPublicIngestOpsLogRoute: ApiPublicIngestOpsLogRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
