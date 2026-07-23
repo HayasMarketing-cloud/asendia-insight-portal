@@ -68,6 +68,7 @@ type Lead = {
   orders_annual: number | null;
   sugarcrm_url: string | null;
   review_reason: string | null;
+  firmographics: Record<string, unknown> | null;
 };
 
 type SortKey = "company_name" | "score_total" | "status" | "asendia_icp_segment";
