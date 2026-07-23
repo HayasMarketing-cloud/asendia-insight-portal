@@ -35,10 +35,10 @@ export const requestRescore = createServerFn({ method: "POST" })
       }),
     });
 
-    let respBody: unknown = null;
     const text = await res.text();
+    let respBody: Record<string, unknown> | string | null = null;
     try {
-      respBody = text ? JSON.parse(text) : null;
+      respBody = text ? (JSON.parse(text) as Record<string, unknown>) : null;
     } catch {
       respBody = text;
     }
