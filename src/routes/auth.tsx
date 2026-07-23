@@ -44,7 +44,10 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: window.location.origin,
+      },
     });
     setLoading(false);
     if (error) {
