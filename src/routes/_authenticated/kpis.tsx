@@ -33,7 +33,7 @@ type Kpi = {
   sql_count: number | null;
   mql_count: number | null;
   manual_count: number | null;
-  discard_count: number | null;
+  discarded_count: number | null;
   high_intent_count: number | null;
   total_leads: number | null;
   coverage_rate_pct: number | null;
@@ -120,7 +120,7 @@ function KpisPage() {
         />
         <KpiCard
           label="Discard"
-          value={data?.discard_count}
+          value={data?.discarded_count}
           icon={XCircle}
           loading={isLoading}
         />

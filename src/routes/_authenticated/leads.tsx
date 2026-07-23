@@ -53,7 +53,7 @@ type Lead = {
   asendia_icp_segment: string | null;
   asendia_region: string | null;
   score_total: number | null;
-  score_confidence: string;
+  
   score_breakdown: string | null;
   score_last_calculated_at: string | null;
   high_intent_override: boolean | null;
@@ -122,7 +122,7 @@ function LeadRankingPage() {
       const { data, error } = await supabase
         .from("leads")
         .select(
-          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_confidence, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason, firmographics",
+          "id, company_name, domain, status, asendia_icp_segment, asendia_region, score_total, score_breakdown, score_last_calculated_at, high_intent_override, missing_ecdb, international_maturity, growth_momentum, buyer_intent_signals, intl_revenue_share, countries_with_revenue, gmv, gmv_growth_yoy_pct, orders_annual, sugarcrm_url, review_reason, firmographics",
         )
         .eq("account_id", accountId!)
         .order("score_total", { ascending: false, nullsFirst: false });
@@ -324,11 +324,6 @@ function LeadRankingPage() {
                     <div className="font-semibold tabular-nums">
                       {lead.score_total ?? "—"}
                     </div>
-                    {lead.score_confidence === "proxy" && (
-                      <div className="text-[10px] uppercase tracking-wider text-chart-4">
-                        proxy
-                      </div>
-                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -425,9 +420,6 @@ function LeadDetail({ lead }: { lead: Lead }) {
             <Badge className="border border-chart-4/40 bg-chart-4/15 text-chart-4">
               High-intent override
             </Badge>
-          )}
-          {lead.score_confidence === "proxy" && (
-            <Badge variant="outline">Proxy scoring</Badge>
           )}
         </div>
 
