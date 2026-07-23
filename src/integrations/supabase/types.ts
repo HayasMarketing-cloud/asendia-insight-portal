@@ -35,93 +35,164 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_score_history: {
+        Row: {
+          account_id: string
+          data_source: string | null
+          domain: string
+          engine_version: string | null
+          gmv_growth_yoy_pct: number | null
+          id: string
+          intl_revenue_share: number | null
+          recorded_at: string
+          score_breakdown: string | null
+          score_total: number | null
+          status: string | null
+          trigger_source: string | null
+        }
+        Insert: {
+          account_id: string
+          data_source?: string | null
+          domain: string
+          engine_version?: string | null
+          gmv_growth_yoy_pct?: number | null
+          id?: string
+          intl_revenue_share?: number | null
+          recorded_at?: string
+          score_breakdown?: string | null
+          score_total?: number | null
+          status?: string | null
+          trigger_source?: string | null
+        }
+        Update: {
+          account_id?: string
+          data_source?: string | null
+          domain?: string
+          engine_version?: string | null
+          gmv_growth_yoy_pct?: number | null
+          id?: string
+          intl_revenue_share?: number | null
+          recorded_at?: string
+          score_breakdown?: string | null
+          score_total?: number | null
+          status?: string | null
+          trigger_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_score_history_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           account_id: string
+          ai_assist: Json | null
           asendia_icp_segment: string | null
           asendia_region: string | null
           buyer_intent_signals: string | null
           company_name: string
           countries_with_revenue: number | null
-          domain: string | null
+          data_source: string
+          domain: string
           firmographics: Json | null
           gmv: number | null
           gmv_growth_yoy_pct: number | null
           growth_momentum: string | null
           high_intent_override: boolean | null
-          hubspot_company_id: string
+          hubspot_company_id: string | null
           hubspot_updated_at: string | null
           id: string
           international_maturity: string | null
           intl_revenue_share: number | null
           missing_ecdb: boolean | null
           orders_annual: number | null
+          review_notes: string | null
           review_reason: string | null
+          review_state: string | null
+          review_values: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
           score_breakdown: string | null
-          score_confidence: string
           score_last_calculated_at: string | null
           score_total: number | null
-          sequence_engagement: Json | null
           status: string
           sugarcrm_url: string | null
           synced_at: string
         }
         Insert: {
           account_id: string
+          ai_assist?: Json | null
           asendia_icp_segment?: string | null
           asendia_region?: string | null
           buyer_intent_signals?: string | null
           company_name: string
           countries_with_revenue?: number | null
-          domain?: string | null
+          data_source?: string
+          domain: string
           firmographics?: Json | null
           gmv?: number | null
           gmv_growth_yoy_pct?: number | null
           growth_momentum?: string | null
           high_intent_override?: boolean | null
-          hubspot_company_id: string
+          hubspot_company_id?: string | null
           hubspot_updated_at?: string | null
           id?: string
           international_maturity?: string | null
           intl_revenue_share?: number | null
           missing_ecdb?: boolean | null
           orders_annual?: number | null
+          review_notes?: string | null
           review_reason?: string | null
+          review_state?: string | null
+          review_values?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
           score_breakdown?: string | null
-          score_confidence?: string
           score_last_calculated_at?: string | null
           score_total?: number | null
-          sequence_engagement?: Json | null
           status: string
           sugarcrm_url?: string | null
           synced_at?: string
         }
         Update: {
           account_id?: string
+          ai_assist?: Json | null
           asendia_icp_segment?: string | null
           asendia_region?: string | null
           buyer_intent_signals?: string | null
           company_name?: string
           countries_with_revenue?: number | null
-          domain?: string | null
+          data_source?: string
+          domain?: string
           firmographics?: Json | null
           gmv?: number | null
           gmv_growth_yoy_pct?: number | null
           growth_momentum?: string | null
           high_intent_override?: boolean | null
-          hubspot_company_id?: string
+          hubspot_company_id?: string | null
           hubspot_updated_at?: string | null
           id?: string
           international_maturity?: string | null
           intl_revenue_share?: number | null
           missing_ecdb?: boolean | null
           orders_annual?: number | null
+          review_notes?: string | null
           review_reason?: string | null
+          review_state?: string | null
+          review_values?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
           score_breakdown?: string | null
-          score_confidence?: string
           score_last_calculated_at?: string | null
           score_total?: number | null
-          sequence_engagement?: Json | null
           status?: string
           sugarcrm_url?: string | null
           synced_at?: string
@@ -141,61 +212,76 @@ export type Database = {
           account_id: string
           api_status: Json | null
           credits_consumed: Json | null
-          discard_count: number | null
+          discarded_count: number | null
           duration_seconds: number | null
           ecdb_coverage_pct: number | null
+          ecdb_covered: number | null
           ecdb_credit_balance: number | null
+          engine_version: string | null
           errors: Json | null
           event_type: string
           gated_count: number | null
           id: string
+          in_hubspot: number | null
           leads_processed: number | null
+          market: string | null
           mql_count: number | null
           run_at: string
           run_status: string
           sql_count: number | null
           workflow_name: string
           write_errors: number | null
+          zi_matched: number | null
         }
         Insert: {
           account_id: string
           api_status?: Json | null
           credits_consumed?: Json | null
-          discard_count?: number | null
+          discarded_count?: number | null
           duration_seconds?: number | null
           ecdb_coverage_pct?: number | null
+          ecdb_covered?: number | null
           ecdb_credit_balance?: number | null
+          engine_version?: string | null
           errors?: Json | null
           event_type: string
           gated_count?: number | null
           id?: string
+          in_hubspot?: number | null
           leads_processed?: number | null
+          market?: string | null
           mql_count?: number | null
           run_at?: string
           run_status?: string
           sql_count?: number | null
           workflow_name: string
           write_errors?: number | null
+          zi_matched?: number | null
         }
         Update: {
           account_id?: string
           api_status?: Json | null
           credits_consumed?: Json | null
-          discard_count?: number | null
+          discarded_count?: number | null
           duration_seconds?: number | null
           ecdb_coverage_pct?: number | null
+          ecdb_covered?: number | null
           ecdb_credit_balance?: number | null
+          engine_version?: string | null
           errors?: Json | null
           event_type?: string
           gated_count?: number | null
           id?: string
+          in_hubspot?: number | null
           leads_processed?: number | null
+          market?: string | null
           mql_count?: number | null
           run_at?: string
           run_status?: string
           sql_count?: number | null
           workflow_name?: string
           write_errors?: number | null
+          zi_matched?: number | null
         }
         Relationships: [
           {
@@ -242,61 +328,15 @@ export type Database = {
           },
         ]
       }
-      sla_events: {
-        Row: {
-          accepted_at: string | null
-          account_id: string
-          created_at: string
-          id: string
-          lead_id: string
-          routing_type: string | null
-          sla_applies: boolean
-          sql_marked_at: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          account_id: string
-          created_at?: string
-          id?: string
-          lead_id: string
-          routing_type?: string | null
-          sla_applies?: boolean
-          sql_marked_at: string
-        }
-        Update: {
-          accepted_at?: string | null
-          account_id?: string
-          created_at?: string
-          id?: string
-          lead_id?: string
-          routing_type?: string | null
-          sla_applies?: boolean
-          sql_marked_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sla_events_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sla_events_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       kpi_summary: {
         Row: {
           account_id: string | null
+          avg_score: number | null
           coverage_rate_pct: number | null
-          discard_count: number | null
+          discarded_count: number | null
+          ecdb_covered_count: number | null
           high_intent_count: number | null
           manual_count: number | null
           mql_count: number | null
@@ -309,33 +349,6 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sla_status: {
-        Row: {
-          accepted_at: string | null
-          account_id: string | null
-          company_name: string | null
-          lead_id: string | null
-          routing_type: string | null
-          sla_state: string | null
-          sql_marked_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sla_events_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sla_events_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
