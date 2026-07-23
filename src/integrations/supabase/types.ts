@@ -14,13 +14,333 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          account_id: string
+          asendia_icp_segment: string | null
+          asendia_region: string | null
+          buyer_intent_signals: string | null
+          company_name: string
+          countries_with_revenue: number | null
+          domain: string | null
+          gmv: number | null
+          gmv_growth_yoy_pct: number | null
+          growth_momentum: string | null
+          high_intent_override: boolean | null
+          hubspot_company_id: string
+          hubspot_updated_at: string | null
+          id: string
+          international_maturity: string | null
+          intl_revenue_share: number | null
+          missing_ecdb: boolean | null
+          orders_annual: number | null
+          review_reason: string | null
+          score_breakdown: string | null
+          score_confidence: string
+          score_last_calculated_at: string | null
+          score_total: number | null
+          sequence_engagement: Json | null
+          status: string
+          sugarcrm_url: string | null
+          synced_at: string
+        }
+        Insert: {
+          account_id: string
+          asendia_icp_segment?: string | null
+          asendia_region?: string | null
+          buyer_intent_signals?: string | null
+          company_name: string
+          countries_with_revenue?: number | null
+          domain?: string | null
+          gmv?: number | null
+          gmv_growth_yoy_pct?: number | null
+          growth_momentum?: string | null
+          high_intent_override?: boolean | null
+          hubspot_company_id: string
+          hubspot_updated_at?: string | null
+          id?: string
+          international_maturity?: string | null
+          intl_revenue_share?: number | null
+          missing_ecdb?: boolean | null
+          orders_annual?: number | null
+          review_reason?: string | null
+          score_breakdown?: string | null
+          score_confidence?: string
+          score_last_calculated_at?: string | null
+          score_total?: number | null
+          sequence_engagement?: Json | null
+          status: string
+          sugarcrm_url?: string | null
+          synced_at?: string
+        }
+        Update: {
+          account_id?: string
+          asendia_icp_segment?: string | null
+          asendia_region?: string | null
+          buyer_intent_signals?: string | null
+          company_name?: string
+          countries_with_revenue?: number | null
+          domain?: string | null
+          gmv?: number | null
+          gmv_growth_yoy_pct?: number | null
+          growth_momentum?: string | null
+          high_intent_override?: boolean | null
+          hubspot_company_id?: string
+          hubspot_updated_at?: string | null
+          id?: string
+          international_maturity?: string | null
+          intl_revenue_share?: number | null
+          missing_ecdb?: boolean | null
+          orders_annual?: number | null
+          review_reason?: string | null
+          score_breakdown?: string | null
+          score_confidence?: string
+          score_last_calculated_at?: string | null
+          score_total?: number | null
+          sequence_engagement?: Json | null
+          status?: string
+          sugarcrm_url?: string | null
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_log: {
+        Row: {
+          account_id: string
+          api_status: Json | null
+          credits_consumed: Json | null
+          discard_count: number | null
+          duration_seconds: number | null
+          ecdb_coverage_pct: number | null
+          ecdb_credit_balance: number | null
+          errors: Json | null
+          event_type: string
+          gated_count: number | null
+          id: string
+          leads_processed: number | null
+          mql_count: number | null
+          run_at: string
+          run_status: string
+          sql_count: number | null
+          workflow_name: string
+          write_errors: number | null
+        }
+        Insert: {
+          account_id: string
+          api_status?: Json | null
+          credits_consumed?: Json | null
+          discard_count?: number | null
+          duration_seconds?: number | null
+          ecdb_coverage_pct?: number | null
+          ecdb_credit_balance?: number | null
+          errors?: Json | null
+          event_type: string
+          gated_count?: number | null
+          id?: string
+          leads_processed?: number | null
+          mql_count?: number | null
+          run_at?: string
+          run_status?: string
+          sql_count?: number | null
+          workflow_name: string
+          write_errors?: number | null
+        }
+        Update: {
+          account_id?: string
+          api_status?: Json | null
+          credits_consumed?: Json | null
+          discard_count?: number | null
+          duration_seconds?: number | null
+          ecdb_coverage_pct?: number | null
+          ecdb_credit_balance?: number | null
+          errors?: Json | null
+          event_type?: string
+          gated_count?: number | null
+          id?: string
+          leads_processed?: number | null
+          mql_count?: number | null
+          run_at?: string
+          run_status?: string
+          sql_count?: number | null
+          workflow_name?: string
+          write_errors?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_log_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          role?: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_events: {
+        Row: {
+          accepted_at: string | null
+          account_id: string
+          created_at: string
+          id: string
+          lead_id: string
+          routing_type: string | null
+          sla_applies: boolean
+          sql_marked_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          account_id: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          routing_type?: string | null
+          sla_applies?: boolean
+          sql_marked_at: string
+        }
+        Update: {
+          accepted_at?: string | null
+          account_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          routing_type?: string | null
+          sla_applies?: boolean
+          sql_marked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_events_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      kpi_summary: {
+        Row: {
+          account_id: string | null
+          coverage_rate_pct: number | null
+          discard_count: number | null
+          high_intent_count: number | null
+          manual_count: number | null
+          mql_count: number | null
+          sql_count: number | null
+          total_leads: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_status: {
+        Row: {
+          accepted_at: string | null
+          account_id: string | null
+          company_name: string | null
+          lead_id: string | null
+          routing_type: string | null
+          sla_state: string | null
+          sql_marked_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_events_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      current_account_id: { Args: never; Returns: string }
+      is_hayas_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
