@@ -1,0 +1,1 @@
+alter table leads add column firmographics jsonb;

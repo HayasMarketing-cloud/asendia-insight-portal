@@ -44,6 +44,7 @@ export type Database = {
           company_name: string
           countries_with_revenue: number | null
           domain: string | null
+          firmographics: Json | null
           gmv: number | null
           gmv_growth_yoy_pct: number | null
           growth_momentum: string | null
@@ -73,6 +74,7 @@ export type Database = {
           company_name: string
           countries_with_revenue?: number | null
           domain?: string | null
+          firmographics?: Json | null
           gmv?: number | null
           gmv_growth_yoy_pct?: number | null
           growth_momentum?: string | null
@@ -102,6 +104,7 @@ export type Database = {
           company_name?: string
           countries_with_revenue?: number | null
           domain?: string | null
+          firmographics?: Json | null
           gmv?: number | null
           gmv_growth_yoy_pct?: number | null
           growth_momentum?: string | null
