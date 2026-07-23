@@ -75,6 +75,10 @@ function deriveDataSource(missingEcdb: boolean | null | undefined, aiAssist: unk
 export const Route = createFileRoute("/api/public/ingest-leads")({
   server: {
     handlers: {
+      GET: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PUT: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PATCH: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      DELETE: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
       OPTIONS: async () =>
         new Response(null, {
           status: 204,
@@ -115,20 +119,40 @@ export const Route = createFileRoute("/api/public/ingest-leads")({
         if (!account) return bad(400, { error: "unknown account_slug" });
         const account_id = account.id;
 
-        const accepted: Array<{ lead: z.infer<typeof leadSchema>; data_source: string }> = [];
+        const WRITABLE_KEYS = new Set([
+          "company_name", "hubspot_company_id", "status",
+          "intl_revenue_share", "countries_with_revenue", "gmv", "gmv_growth_yoy_pct",
+          "orders_annual", "international_maturity", "growth_momentum",
+          "buyer_intent_signals", "asendia_icp_segment", "asendia_region",
+          "score_total", "score_breakdown", "score_last_calculated_at",
+          "missing_ecdb", "high_intent_override", "review_reason",
+          "sugarcrm_url", "hubspot_updated_at", "firmographics", "ai_assist",
+        ]);
+
+        type Accepted = {
+          lead: z.infer<typeof leadSchema>;
+          data_source: string;
+          providedKeys: Set<string>;
+        };
+        const accepted: Accepted[] = [];
         const rejected: Array<{ domain: string; reason: string }> = [];
 
         for (const raw of leads) {
           const r = leadSchema.safeParse(raw);
+          const rawObj = (raw && typeof raw === "object") ? (raw as Record<string, unknown>) : {};
           if (!r.success) {
-            const rawObj = (raw && typeof raw === "object") ? (raw as Record<string, unknown>) : {};
             const domain = typeof rawObj.domain === "string" ? rawObj.domain : "(missing)";
             const firstIssue = r.error.issues[0];
             const reason = firstIssue ? `${firstIssue.path.join(".") || "root"}: ${firstIssue.message}` : "invalid lead";
             rejected.push({ domain, reason });
             continue;
           }
-          accepted.push({ lead: r.data, data_source: deriveDataSource(r.data.missing_ecdb, r.data.ai_assist) });
+          const providedKeys = new Set(Object.keys(rawObj).filter((k) => WRITABLE_KEYS.has(k)));
+          accepted.push({
+            lead: r.data,
+            data_source: deriveDataSource(r.data.missing_ecdb, r.data.ai_assist),
+            providedKeys,
+          });
         }
 
         if (accepted.length === 0) {
@@ -138,7 +162,7 @@ export const Route = createFileRoute("/api/public/ingest-leads")({
           });
         }
 
-        // Split inserted vs updated
+        // Determine which domains already exist for this account
         const domains = accepted.map((a) => a.lead.domain);
         const { data: existing, error: exErr } = await supabaseAdmin
           .from("leads")
@@ -148,48 +172,75 @@ export const Route = createFileRoute("/api/public/ingest-leads")({
         if (exErr) return bad(500, { error: "db error checking existing", detail: exErr.message });
         const existingSet = new Set((existing ?? []).map((r) => r.domain));
 
-        // Upsert (explicit column list; review columns intentionally omitted)
-        const upsertRows = accepted.map(({ lead, data_source }) => ({
-          account_id,
-          domain: lead.domain,
-          company_name: lead.company_name,
-          hubspot_company_id: lead.hubspot_company_id ?? null,
-          status: lead.status,
-          intl_revenue_share: lead.intl_revenue_share ?? null,
-          countries_with_revenue: lead.countries_with_revenue ?? null,
-          gmv: lead.gmv ?? null,
-          gmv_growth_yoy_pct: lead.gmv_growth_yoy_pct ?? null,
-          orders_annual: lead.orders_annual ?? null,
-          international_maturity: lead.international_maturity ?? null,
-          growth_momentum: lead.growth_momentum ?? null,
-          buyer_intent_signals: lead.buyer_intent_signals ?? null,
-          asendia_icp_segment: lead.asendia_icp_segment ?? null,
-          asendia_region: lead.asendia_region ?? null,
-          score_total: lead.score_total ?? null,
-          score_breakdown: lead.score_breakdown ?? null,
-          score_last_calculated_at: lead.score_last_calculated_at ?? null,
-          missing_ecdb: lead.missing_ecdb ?? false,
-          high_intent_override: lead.high_intent_override ?? false,
-          review_reason: lead.review_reason ?? null,
-          sugarcrm_url: lead.sugarcrm_url ?? null,
-          hubspot_updated_at: lead.hubspot_updated_at ?? null,
-          firmographics: (lead.firmographics ?? null) as never,
-          ai_assist: (lead.ai_assist ?? null) as never,
-          data_source,
-          synced_at: new Date().toISOString(),
-        }));
+        const nowIso = new Date().toISOString();
 
-        const { error: upErr } = await supabaseAdmin
-          .from("leads")
-          .upsert(upsertRows, { onConflict: "account_id,domain" });
-        if (upErr) return bad(500, { error: "upsert failed", detail: upErr.message });
+        // Build a full-column row (used for INSERTs)
+        function fullRow({ lead, data_source }: Accepted) {
+          return {
+            account_id,
+            domain: lead.domain,
+            company_name: lead.company_name,
+            hubspot_company_id: lead.hubspot_company_id ?? null,
+            status: lead.status,
+            intl_revenue_share: lead.intl_revenue_share ?? null,
+            countries_with_revenue: lead.countries_with_revenue ?? null,
+            gmv: lead.gmv ?? null,
+            gmv_growth_yoy_pct: lead.gmv_growth_yoy_pct ?? null,
+            orders_annual: lead.orders_annual ?? null,
+            international_maturity: lead.international_maturity ?? null,
+            growth_momentum: lead.growth_momentum ?? null,
+            buyer_intent_signals: lead.buyer_intent_signals ?? null,
+            asendia_icp_segment: lead.asendia_icp_segment ?? null,
+            asendia_region: lead.asendia_region ?? null,
+            score_total: lead.score_total ?? null,
+            score_breakdown: lead.score_breakdown ?? null,
+            score_last_calculated_at: lead.score_last_calculated_at ?? null,
+            missing_ecdb: lead.missing_ecdb ?? false,
+            high_intent_override: lead.high_intent_override ?? false,
+            review_reason: lead.review_reason ?? null,
+            sugarcrm_url: lead.sugarcrm_url ?? null,
+            hubspot_updated_at: lead.hubspot_updated_at ?? null,
+            firmographics: (lead.firmographics ?? null) as never,
+            ai_assist: (lead.ai_assist ?? null) as never,
+            data_source,
+            synced_at: nowIso,
+          };
+        }
+
+        // INSERT new rows (all columns)
+        const toInsert = accepted.filter((a) => !existingSet.has(a.lead.domain));
+        if (toInsert.length > 0) {
+          const { error: insErr } = await supabaseAdmin
+            .from("leads")
+            .insert(toInsert.map(fullRow));
+          if (insErr) return bad(500, { error: "insert failed", detail: insErr.message });
+        }
+
+        // UPDATE existing rows: only columns that were actually provided in the payload
+        // (this preserves omitted fields like score_total, firmographics from earlier runs)
+        for (const a of accepted) {
+          if (!existingSet.has(a.lead.domain)) continue;
+          const patch: Record<string, unknown> = {
+            data_source: a.data_source,
+            synced_at: nowIso,
+          };
+          const full = fullRow(a) as Record<string, unknown>;
+          for (const key of a.providedKeys) {
+            patch[key] = full[key];
+          }
+          const { error: updErr } = await supabaseAdmin
+            .from("leads")
+            .update(patch as never)
+            .eq("account_id", account_id)
+            .eq("domain", a.lead.domain);
+          if (updErr) return bad(500, { error: "update failed", detail: updErr.message });
+        }
 
         // Append score history rows
-        const now = new Date().toISOString();
         const historyRows = accepted.map(({ lead, data_source }) => ({
           account_id,
           domain: lead.domain,
-          recorded_at: now,
+          recorded_at: nowIso,
           score_total: lead.score_total ?? null,
           score_breakdown: lead.score_breakdown ?? null,
           status: lead.status,
@@ -202,12 +253,8 @@ export const Route = createFileRoute("/api/public/ingest-leads")({
         const { error: histErr } = await supabaseAdmin.from("lead_score_history").insert(historyRows);
         if (histErr) return bad(500, { error: "history insert failed", detail: histErr.message });
 
-        let inserted = 0;
-        let updated = 0;
-        for (const { lead } of accepted) {
-          if (existingSet.has(lead.domain)) updated++;
-          else inserted++;
-        }
+        const inserted = toInsert.length;
+        const updated = accepted.length - inserted;
 
         return new Response(JSON.stringify({ inserted, updated, rejected }), {
           status: 200,

@@ -45,6 +45,10 @@ function secretOk(header: string | null, expected: string) {
 export const Route = createFileRoute("/api/public/ingest-ops-log")({
   server: {
     handlers: {
+      GET: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PUT: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      PATCH: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
+      DELETE: async () => new Response("method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
       OPTIONS: async () =>
         new Response(null, {
           status: 204,
