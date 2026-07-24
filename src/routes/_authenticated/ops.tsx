@@ -509,7 +509,6 @@ function RunHistory({ rows, loading }: { rows: OpsRow[]; loading: boolean }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Engine</TableHead>
                   <TableHead className="text-right">Processed</TableHead>
                   <TableHead className="text-right">Coverage</TableHead>
                   <TableHead className="text-right">SQL</TableHead>
