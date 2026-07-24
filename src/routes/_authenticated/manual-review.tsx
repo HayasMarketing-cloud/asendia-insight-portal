@@ -54,7 +54,25 @@ type QueueLead = {
   review_reason: string | null;
   ai_assist: Record<string, unknown> | null;
   firmographics: Record<string, unknown> | null;
+  sugarcrm_url: string | null;
 };
+
+type RescoreOutcome = {
+  score_total: number | null;
+  status: string;
+  sugarcrm_url: string | null;
+};
+
+const OUTCOME_LABELS: Record<string, string> = {
+  sql: "Sent to sales",
+  mql: "Added to nurture sequence",
+  discarded: "Discarded by score",
+  manual_review: "Returned to manual review",
+};
+
+function outcomeLabel(status: string): string {
+  return OUTCOME_LABELS[status] ?? `Status: ${status}`;
+}
 
 type StateFilter =
   | "worklist"
