@@ -151,7 +151,13 @@ function KpisPage() {
 
   const monthly = useMemo(() => {
     return runs.map((r) => ({
-      label: formatLondon(r.run_at, { month: "short", year: "2-digit" }) ?? r.run_at,
+      label:
+        formatLondon(r.run_at, {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        }) ?? r.run_at,
       run_at: r.run_at,
       SQL: r.sql_count ?? 0,
       MQL: r.mql_count ?? 0,
@@ -267,7 +273,7 @@ function KpisPage() {
             ) : (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={histogram} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                  <BarChart data={histogram} margin={{ top: 24, right: 16, left: 0, bottom: 4 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="bin" fontSize={10} tickLine={false} />
                     <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} width={28} />
