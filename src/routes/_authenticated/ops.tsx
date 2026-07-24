@@ -527,12 +527,12 @@ function RunHistory({ rows, loading }: { rows: OpsRow[]; loading: boolean }) {
                           <span>{fmtDate(r.run_at)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {new Date(r.run_at).toUTCString()}
+                          <div>{new Date(r.run_at).toUTCString()}</div>
+                          <div className="mt-0.5 text-muted-foreground">
+                            Engine {dash(r.engine_version)}
+                          </div>
                         </TooltipContent>
                       </Tooltip>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {dash(r.engine_version)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {r.leads_processed != null ? nf.format(r.leads_processed) : "—"}
