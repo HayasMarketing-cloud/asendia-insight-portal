@@ -106,6 +106,7 @@ function ManualReviewPage() {
   const rescoreFn = useServerFn(requestRescore);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<StateFilter>("worklist");
+  const [rescored, setRescored] = useState<Record<string, RescoreOutcome>>({});
 
   const queueQ = useQuery({
     queryKey: ["manual_review_queue", accountId, filter],
