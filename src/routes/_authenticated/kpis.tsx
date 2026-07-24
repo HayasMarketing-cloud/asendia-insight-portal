@@ -503,22 +503,25 @@ function FunnelBar({
   label,
   count,
   max,
-  colorClass,
+  color,
   hint,
 }: {
   label: string;
   count: number;
   max: number;
-  colorClass: string;
+  color: "primary" | "chart-4";
   hint?: string;
 }) {
-  const heightPct = max > 0 ? Math.max(6, (count / max) * 100) : 6;
+  // Reserve ~52px for the count + labels; bar fills the rest of the 256px card.
+  const AVAILABLE_PX = 200;
+  const heightPx = max > 0 ? Math.max(12, Math.round((count / max) * AVAILABLE_PX)) : 12;
+  const bg = color === "primary" ? "var(--primary)" : "var(--chart-4)";
   return (
     <div className="flex h-full flex-1 flex-col items-center justify-end gap-2">
       <div className="text-sm font-semibold tabular-nums">{count}</div>
       <div
-        className={`${colorClass} w-full rounded-t-md`}
-        style={{ height: `${heightPct}%` }}
+        className="w-full rounded-t-md"
+        style={{ height: `${heightPx}px`, backgroundColor: bg }}
       />
       <div className="text-center text-xs">
         <div className="font-medium">{label}</div>
