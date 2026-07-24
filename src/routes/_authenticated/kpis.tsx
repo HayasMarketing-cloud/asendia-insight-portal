@@ -328,7 +328,7 @@ function KpisPage() {
                       label={f.stage}
                       count={f.count}
                       max={Math.max(1, funnel[0].count, manualLane)}
-                      colorClass="bg-primary"
+                      color="primary"
                     />
                   ))}
                 </div>
