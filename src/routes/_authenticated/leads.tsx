@@ -52,7 +52,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkline, type SparkPoint } from "@/components/portal/Sparkline";
+import type { SparkPoint } from "@/components/portal/Sparkline";
 import {
   STATUS_LABELS,
   INTL_MATURITY_LABELS,
@@ -416,7 +416,7 @@ function LeadRankingPage() {
                 <TableHead>Intent</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Updated</TableHead>
-                <TableHead>SugarCRM</TableHead>
+                <TableHead>CRM sync</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -499,8 +499,8 @@ function LeadRankingPage() {
                           </Tooltip>
                         )}
                       </TableCell>
-                      <TableCell className="text-primary">
-                        <Sparkline points={points} />
+                      <TableCell>
+                        <TrendDelta points={points} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
@@ -577,20 +577,11 @@ function LeadRankingPage() {
                           "—"
                         )}
                       </TableCell>
-                      <TableCell>
-                        {lead.sugarcrm_url ? (
-                          <a
-                            href={lead.sugarcrm_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                          >
-                            Open <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <CrmSyncCell
+                          status={lead.status}
+                          sugarcrmUrl={lead.sugarcrm_url}
+                        />
                       </TableCell>
                     </TableRow>
                   );
@@ -653,6 +644,77 @@ function SortableHead({
       </Button>
     </TableHead>
   );
+}
+
+function TrendDelta({ points }: { points: SparkPoint[] }) {
+  const scored = points.filter(
+    (p): p is SparkPoint & { score_total: number } =>
+      typeof p.score_total === "number" && Number.isFinite(p.score_total),
+  );
+  if (scored.length === 0) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  if (scored.length === 1) {
+    return (
+      <span className="text-xs italic text-muted-foreground">First run</span>
+    );
+  }
+  const latest = scored[scored.length - 1].score_total;
+  const prev = scored[scored.length - 2].score_total;
+  const delta = Math.round((latest - prev) * 10) / 10;
+  if (delta === 0) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  const up = delta > 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-sm font-medium tabular-nums ${
+        up ? "text-chart-2" : "text-destructive"
+      }`}
+    >
+      {up ? (
+        <ArrowUp className="h-3.5 w-3.5" />
+      ) : (
+        <ArrowDown className="h-3.5 w-3.5" />
+      )}
+      {up ? "+" : "−"}
+      {Math.abs(delta).toFixed(1)}
+    </span>
+  );
+}
+
+function CrmSyncCell({
+  status,
+  sugarcrmUrl,
+}: {
+  status: string;
+  sugarcrmUrl: string | null;
+}) {
+  // MQL / discarded / manual_review are never routed to SugarCRM.
+  if (status !== "sql") {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  // SQL: no explicit sync-status field exists yet. A URL implies Synced;
+  // otherwise render "—" (do not simulate pending/error states).
+  if (sugarcrmUrl) {
+    return (
+      <a
+        href={sugarcrmUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1"
+      >
+        <Badge
+          variant="outline"
+          className="border-chart-2/40 bg-chart-2/10 text-chart-2 hover:bg-chart-2/15"
+        >
+          Synced
+          <ExternalLink className="ml-1 h-3 w-3" />
+        </Badge>
+      </a>
+    );
+  }
+  return <span className="text-muted-foreground">—</span>;
 }
 
 function LeadDetail({
