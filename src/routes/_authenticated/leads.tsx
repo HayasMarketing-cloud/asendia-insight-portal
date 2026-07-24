@@ -115,13 +115,10 @@ function LeadRankingPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  console.log("[diag:leads] active account", { accountId, accountName: account?.name ?? null });
-
   const { data, isLoading, error } = useQuery({
     queryKey: ["leads", accountId],
     enabled: !!accountId,
     queryFn: async () => {
-      console.log("[diag:leads] firing leads query", { accountId });
       const res = await supabase
         .from("leads")
         .select(
@@ -129,11 +126,6 @@ function LeadRankingPage() {
         )
         .eq("account_id", accountId!)
         .order("score_total", { ascending: false, nullsFirst: false });
-      console.log("[diag:leads] leads query result", {
-        count: res.data?.length,
-        error: res.error,
-        status: res.status,
-      });
       if (res.error) throw res.error;
       return res.data as Lead[];
     },
