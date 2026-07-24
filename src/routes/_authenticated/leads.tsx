@@ -577,20 +577,11 @@ function LeadRankingPage() {
                           "—"
                         )}
                       </TableCell>
-                      <TableCell>
-                        {lead.sugarcrm_url ? (
-                          <a
-                            href={lead.sugarcrm_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                          >
-                            Open <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <CrmSyncCell
+                          status={lead.status}
+                          sugarcrmUrl={lead.sugarcrm_url}
+                        />
                       </TableCell>
                     </TableRow>
                   );
