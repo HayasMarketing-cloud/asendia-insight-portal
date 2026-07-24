@@ -151,7 +151,13 @@ function KpisPage() {
 
   const monthly = useMemo(() => {
     return runs.map((r) => ({
-      label: formatLondon(r.run_at, { month: "short", year: "2-digit" }) ?? r.run_at,
+      label:
+        formatLondon(r.run_at, {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        }) ?? r.run_at,
       run_at: r.run_at,
       SQL: r.sql_count ?? 0,
       MQL: r.mql_count ?? 0,
