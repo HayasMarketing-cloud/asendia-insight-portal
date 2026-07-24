@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedKpisRouteImport } from './routes/_authenticated/kpis'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedOpsRouteImport } from './routes/_authenticated/ops'
 import { Route as ApiPublicIngestLeadsRouteImport } from './routes/api/public/ingest-leads'
 import { Route as ApiPublicIngestOpsLogRouteImport } from './routes/api/public/ingest-ops-log'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -43,6 +44,11 @@ const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOpsRoute = AuthenticatedOpsRouteImport.update({
+  id: '/ops',
+  path: '/ops',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicIngestLeadsRoute = ApiPublicIngestLeadsRouteImport.update({
   id: '/api/public/ingest-leads',
   path: '/api/public/ingest-leads',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
+  '/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
+  '/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/kpis': typeof AuthenticatedKpisRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
+  '/_authenticated/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/kpis'
     | '/leads'
+    | '/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/kpis'
     | '/leads'
+    | '/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/kpis'
     | '/_authenticated/leads'
+    | '/_authenticated/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
     | '/lovable/email/auth/preview'
@@ -177,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ops': {
+      id: '/_authenticated/ops'
+      path: '/ops'
+      fullPath: '/ops'
+      preLoaderRoute: typeof AuthenticatedOpsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/ingest-leads': {
       id: '/api/public/ingest-leads'
       path: '/api/public/ingest-leads'
@@ -211,11 +230,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedKpisRoute: typeof AuthenticatedKpisRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
+  AuthenticatedOpsRoute: typeof AuthenticatedOpsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKpisRoute: AuthenticatedKpisRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
+  AuthenticatedOpsRoute: AuthenticatedOpsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
