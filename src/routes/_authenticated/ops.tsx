@@ -147,7 +147,7 @@ function OpsPage() {
 
         {/* 2 + 3. ECDB credits + Last run */}
         <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <EcdbCard latest={latestHc} previous={prevHc} loading={loadingHc} />
+          <EcdbCard latest={latestHc} previous={prevHc} run={latestRun} loading={loadingHc || loadingRuns} />
           <div className="lg:col-span-2">
             <LastRunCard run={latestRun} loading={loadingRuns} />
           </div>
