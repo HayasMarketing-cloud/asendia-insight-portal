@@ -289,34 +289,55 @@ function ManualReviewPage() {
         </aside>
 
         <section className="min-h-0 overflow-y-auto rounded-lg border border-border bg-card p-6">
-          {!selected && !queueQ.isLoading && (
-            <div className="grid h-full place-items-center text-sm text-muted-foreground">
-              {queue.length === 0
-                ? "Nothing to review right now."
-                : "Select a lead from the queue."}
-            </div>
-          )}
-          {selected && (
-            <ReviewPanel
-              key={selected.id}
-              lead={selected}
-              isAdmin={isAdmin}
-              accountSlug={account?.slug ?? null}
-              outcome={rescored[selected.id] ?? null}
-              onSaved={() => {
-                qc.invalidateQueries({
-                  queryKey: ["manual_review_queue", accountId],
-                });
+          {snapshot ? (
+            <OutcomeSnapshotView
+              snapshot={snapshot}
+              onContinue={() => {
+                setSnapshot(null);
+                setSelectedId(null);
               }}
-              onRescoreComplete={(outcome) => {
-                setRescored((prev) => ({ ...prev, [selected.id]: outcome }));
-                qc.invalidateQueries({
-                  queryKey: ["manual_review_queue", accountId],
-                });
-                qc.invalidateQueries({ queryKey: ["leads", accountId] });
-              }}
-              rescoreFn={rescoreFn}
             />
+          ) : (
+            <>
+              {!selected && !queueQ.isLoading && (
+                <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                  {queue.length === 0
+                    ? "Nothing to review right now."
+                    : "Select a lead from the queue."}
+                </div>
+              )}
+              {selected && (
+                <ReviewPanel
+                  key={selected.id}
+                  lead={selected}
+                  isAdmin={isAdmin}
+                  accountSlug={account?.slug ?? null}
+                  outcome={rescored[selected.id] ?? null}
+                  onSaved={() => {
+                    qc.invalidateQueries({
+                      queryKey: ["manual_review_queue", accountId],
+                    });
+                  }}
+                  onRescoreComplete={(outcome) => {
+                    setRescored((prev) => ({
+                      ...prev,
+                      [selected.id]: outcome,
+                    }));
+                    setSnapshot({
+                      leadId: selected.id,
+                      companyName: selected.company_name,
+                      domain: selected.domain,
+                      outcome,
+                    });
+                    qc.invalidateQueries({
+                      queryKey: ["manual_review_queue", accountId],
+                    });
+                    qc.invalidateQueries({ queryKey: ["leads", accountId] });
+                  }}
+                  rescoreFn={rescoreFn}
+                />
+              )}
+            </>
           )}
         </section>
       </div>
