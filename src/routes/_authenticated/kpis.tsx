@@ -338,7 +338,7 @@ function KpisPage() {
                     label="Manual review"
                     count={manualLane}
                     max={Math.max(1, funnel[0].count, manualLane)}
-                    colorClass="bg-chart-4"
+                    color="chart-4"
                     hint="parallel lane"
                   />
                 </div>
