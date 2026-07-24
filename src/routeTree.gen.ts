@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedKpisRouteImport } from './routes/_authenticated/kpis'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedManualReviewRouteImport } from './routes/_authenticated/manual-review'
 import { Route as AuthenticatedOpsRouteImport } from './routes/_authenticated/ops'
 import { Route as ApiPublicIngestLeadsRouteImport } from './routes/api/public/ingest-leads'
 import { Route as ApiPublicIngestOpsLogRouteImport } from './routes/api/public/ingest-ops-log'
@@ -44,6 +45,12 @@ const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedManualReviewRoute =
+  AuthenticatedManualReviewRouteImport.update({
+    id: '/manual-review',
+    path: '/manual-review',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOpsRoute = AuthenticatedOpsRouteImport.update({
   id: '/ops',
   path: '/ops',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
+  '/manual-review': typeof AuthenticatedManualReviewRoute
   '/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/kpis': typeof AuthenticatedKpisRoute
   '/leads': typeof AuthenticatedLeadsRoute
+  '/manual-review': typeof AuthenticatedManualReviewRoute
   '/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/kpis': typeof AuthenticatedKpisRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
+  '/_authenticated/manual-review': typeof AuthenticatedManualReviewRoute
   '/_authenticated/ops': typeof AuthenticatedOpsRoute
   '/api/public/ingest-leads': typeof ApiPublicIngestLeadsRoute
   '/api/public/ingest-ops-log': typeof ApiPublicIngestOpsLogRoute
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/kpis'
     | '/leads'
+    | '/manual-review'
     | '/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/kpis'
     | '/leads'
+    | '/manual-review'
     | '/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
@@ -135,6 +147,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/kpis'
     | '/_authenticated/leads'
+    | '/_authenticated/manual-review'
     | '/_authenticated/ops'
     | '/api/public/ingest-leads'
     | '/api/public/ingest-ops-log'
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/manual-review': {
+      id: '/_authenticated/manual-review'
+      path: '/manual-review'
+      fullPath: '/manual-review'
+      preLoaderRoute: typeof AuthenticatedManualReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ops': {
       id: '/_authenticated/ops'
       path: '/ops'
@@ -230,12 +250,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedKpisRoute: typeof AuthenticatedKpisRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
+  AuthenticatedManualReviewRoute: typeof AuthenticatedManualReviewRoute
   AuthenticatedOpsRoute: typeof AuthenticatedOpsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKpisRoute: AuthenticatedKpisRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
+  AuthenticatedManualReviewRoute: AuthenticatedManualReviewRoute,
   AuthenticatedOpsRoute: AuthenticatedOpsRoute,
 }
 
