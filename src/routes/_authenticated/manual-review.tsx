@@ -918,3 +918,51 @@ function formatValue(value: unknown): string {
     return String(value);
   }
 }
+
+function OutcomeSnapshotView({
+  snapshot,
+  onContinue,
+}: {
+  snapshot: OutcomeSnapshot;
+  onContinue: () => void;
+}) {
+  const { companyName, domain, outcome } = snapshot;
+  return (
+    <div className="flex h-full flex-col">
+      <div className="rounded-md border border-chart-2/50 bg-chart-2/10 p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-chart-2" />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-chart-2">
+              Rescore complete
+            </div>
+            <div className="mt-1 truncate text-sm text-muted-foreground">
+              {companyName}
+              {domain ? ` · ${domain}` : ""}
+            </div>
+            <div className="mt-2 text-lg font-semibold text-foreground">
+              Rescored:{" "}
+              <span className="tabular-nums">
+                {outcome.score_total ?? "—"}
+              </span>{" "}
+              — {outcomeLabel(outcome.status)}
+            </div>
+            {outcome.sugarcrm_url && (
+              <a
+                href={outcome.sugarcrm_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline underline-offset-2"
+              >
+                Open in SugarCRM ↗
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="mt-6 flex justify-end">
+        <Button onClick={onContinue}>Continue</Button>
+      </div>
+    </div>
+  );
+}
