@@ -63,6 +63,13 @@ type RescoreOutcome = {
   sugarcrm_url: string | null;
 };
 
+type OutcomeSnapshot = {
+  leadId: string;
+  companyName: string;
+  domain: string | null;
+  outcome: RescoreOutcome;
+};
+
 const OUTCOME_LABELS: Record<string, string> = {
   sql: "Sent to sales",
   mql: "Added to nurture sequence",
