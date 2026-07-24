@@ -361,6 +361,7 @@ function ReviewPanel({
   lead,
   isAdmin,
   accountSlug,
+  outcome,
   onSaved,
   onRescoreComplete,
   rescoreFn,
@@ -368,8 +369,9 @@ function ReviewPanel({
   lead: QueueLead;
   isAdmin: boolean;
   accountSlug: string | null;
+  outcome: RescoreOutcome | null;
   onSaved: () => void;
-  onRescoreComplete: () => void;
+  onRescoreComplete: (outcome: RescoreOutcome) => void;
   rescoreFn: (opts: {
     data: {
       account_slug: string;
