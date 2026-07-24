@@ -293,13 +293,14 @@ function ManualReviewPage() {
               lead={selected}
               isAdmin={isAdmin}
               accountSlug={account?.slug ?? null}
+              outcome={rescored[selected.id] ?? null}
               onSaved={() => {
                 qc.invalidateQueries({
                   queryKey: ["manual_review_queue", accountId],
                 });
               }}
-              onRescoreComplete={() => {
-                setSelectedId(null);
+              onRescoreComplete={(outcome) => {
+                setRescored((prev) => ({ ...prev, [selected.id]: outcome }));
                 qc.invalidateQueries({
                   queryKey: ["manual_review_queue", accountId],
                 });
