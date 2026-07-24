@@ -114,7 +114,7 @@ function ManualReviewPage() {
       let q = supabase
         .from("leads")
         .select(
-          "id, company_name, domain, status, data_source, review_state, review_notes, review_values, reviewed_at, reviewed_by, asendia_icp_segment, international_maturity, growth_momentum, buyer_intent_signals, score_total, score_breakdown, score_last_calculated_at, review_reason, ai_assist, firmographics",
+          "id, company_name, domain, status, data_source, review_state, review_notes, review_values, reviewed_at, reviewed_by, asendia_icp_segment, international_maturity, growth_momentum, buyer_intent_signals, score_total, score_breakdown, score_last_calculated_at, review_reason, ai_assist, firmographics, sugarcrm_url",
         )
         .eq("account_id", accountId!)
         .eq("status", "manual_review");
