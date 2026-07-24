@@ -63,6 +63,13 @@ type RescoreOutcome = {
   sugarcrm_url: string | null;
 };
 
+type OutcomeSnapshot = {
+  leadId: string;
+  companyName: string;
+  domain: string | null;
+  outcome: RescoreOutcome;
+};
+
 const OUTCOME_LABELS: Record<string, string> = {
   sql: "Sent to sales",
   mql: "Added to nurture sequence",
@@ -107,6 +114,7 @@ function ManualReviewPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<StateFilter>("worklist");
   const [rescored, setRescored] = useState<Record<string, RescoreOutcome>>({});
+  const [snapshot, setSnapshot] = useState<OutcomeSnapshot | null>(null);
 
   const queueQ = useQuery({
     queryKey: ["manual_review_queue", accountId, filter],
@@ -145,11 +153,12 @@ function ManualReviewPage() {
   );
 
   useEffect(() => {
+    if (snapshot) return;
     if (queue.length === 0) return;
     if (!selectedId || !queue.some((l) => l.id === selectedId)) {
       setSelectedId(queue[0].id);
     }
-  }, [queue, selectedId]);
+  }, [queue, selectedId, snapshot]);
 
   return (
     <div className="flex h-screen flex-col p-8">
@@ -280,34 +289,55 @@ function ManualReviewPage() {
         </aside>
 
         <section className="min-h-0 overflow-y-auto rounded-lg border border-border bg-card p-6">
-          {!selected && !queueQ.isLoading && (
-            <div className="grid h-full place-items-center text-sm text-muted-foreground">
-              {queue.length === 0
-                ? "Nothing to review right now."
-                : "Select a lead from the queue."}
-            </div>
-          )}
-          {selected && (
-            <ReviewPanel
-              key={selected.id}
-              lead={selected}
-              isAdmin={isAdmin}
-              accountSlug={account?.slug ?? null}
-              outcome={rescored[selected.id] ?? null}
-              onSaved={() => {
-                qc.invalidateQueries({
-                  queryKey: ["manual_review_queue", accountId],
-                });
+          {snapshot ? (
+            <OutcomeSnapshotView
+              snapshot={snapshot}
+              onContinue={() => {
+                setSnapshot(null);
+                setSelectedId(null);
               }}
-              onRescoreComplete={(outcome) => {
-                setRescored((prev) => ({ ...prev, [selected.id]: outcome }));
-                qc.invalidateQueries({
-                  queryKey: ["manual_review_queue", accountId],
-                });
-                qc.invalidateQueries({ queryKey: ["leads", accountId] });
-              }}
-              rescoreFn={rescoreFn}
             />
+          ) : (
+            <>
+              {!selected && !queueQ.isLoading && (
+                <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                  {queue.length === 0
+                    ? "Nothing to review right now."
+                    : "Select a lead from the queue."}
+                </div>
+              )}
+              {selected && (
+                <ReviewPanel
+                  key={selected.id}
+                  lead={selected}
+                  isAdmin={isAdmin}
+                  accountSlug={account?.slug ?? null}
+                  outcome={rescored[selected.id] ?? null}
+                  onSaved={() => {
+                    qc.invalidateQueries({
+                      queryKey: ["manual_review_queue", accountId],
+                    });
+                  }}
+                  onRescoreComplete={(outcome) => {
+                    setRescored((prev) => ({
+                      ...prev,
+                      [selected.id]: outcome,
+                    }));
+                    setSnapshot({
+                      leadId: selected.id,
+                      companyName: selected.company_name,
+                      domain: selected.domain,
+                      outcome,
+                    });
+                    qc.invalidateQueries({
+                      queryKey: ["manual_review_queue", accountId],
+                    });
+                    qc.invalidateQueries({ queryKey: ["leads", accountId] });
+                  }}
+                  rescoreFn={rescoreFn}
+                />
+              )}
+            </>
           )}
         </section>
       </div>
@@ -887,4 +917,52 @@ function formatValue(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function OutcomeSnapshotView({
+  snapshot,
+  onContinue,
+}: {
+  snapshot: OutcomeSnapshot;
+  onContinue: () => void;
+}) {
+  const { companyName, domain, outcome } = snapshot;
+  return (
+    <div className="flex h-full flex-col">
+      <div className="rounded-md border border-chart-2/50 bg-chart-2/10 p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-chart-2" />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-chart-2">
+              Rescore complete
+            </div>
+            <div className="mt-1 truncate text-sm text-muted-foreground">
+              {companyName}
+              {domain ? ` · ${domain}` : ""}
+            </div>
+            <div className="mt-2 text-lg font-semibold text-foreground">
+              Rescored:{" "}
+              <span className="tabular-nums">
+                {outcome.score_total ?? "—"}
+              </span>{" "}
+              — {outcomeLabel(outcome.status)}
+            </div>
+            {outcome.sugarcrm_url && (
+              <a
+                href={outcome.sugarcrm_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline underline-offset-2"
+              >
+                Open in SugarCRM ↗
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="mt-6 flex justify-end">
+        <Button onClick={onContinue}>Continue</Button>
+      </div>
+    </div>
+  );
 }
