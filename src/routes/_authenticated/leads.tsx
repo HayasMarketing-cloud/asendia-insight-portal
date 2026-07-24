@@ -416,7 +416,7 @@ function LeadRankingPage() {
                 <TableHead>Intent</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Updated</TableHead>
-                <TableHead>SugarCRM</TableHead>
+                <TableHead>CRM sync</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
