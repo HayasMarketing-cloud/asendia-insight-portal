@@ -499,8 +499,8 @@ function LeadRankingPage() {
                           </Tooltip>
                         )}
                       </TableCell>
-                      <TableCell className="text-primary">
-                        <Sparkline points={points} />
+                      <TableCell>
+                        <TrendDelta points={points} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
