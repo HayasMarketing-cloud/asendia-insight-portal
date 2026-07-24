@@ -404,15 +404,16 @@ function ReviewPanel({
       setError("Not signed in.");
       return null;
     }
-    const payload: Record<string, unknown> = {
+    const basePayload = {
       review_state: nextState,
       reviewed_by: uid,
       reviewed_at: new Date().toISOString(),
       review_notes: notes.trim() ? notes.trim() : null,
     };
-    if (opts.includeReviewValues && opts.reviewValues) {
-      payload.review_values = opts.reviewValues;
-    }
+    const payload =
+      opts.includeReviewValues && opts.reviewValues
+        ? { ...basePayload, review_values: opts.reviewValues as never }
+        : basePayload;
     const res = await supabase
       .from("leads")
       .update(payload)
