@@ -52,7 +52,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sparkline, type SparkPoint } from "@/components/portal/Sparkline";
+import type { SparkPoint } from "@/components/portal/Sparkline";
 import {
   STATUS_LABELS,
   INTL_MATURITY_LABELS,
