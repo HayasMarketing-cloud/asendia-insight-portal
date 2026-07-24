@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "asendia-insight-portal"
+const SITE_NAME = "Hayas Client Portal"
 const SENDER_DOMAIN = "notify.hayasmarketing.com"
 const ROOT_DOMAIN = "hayasmarketing.com"
 const FROM_DOMAIN = "notify.hayasmarketing.com"
@@ -19,7 +19,7 @@ const SITE_URL = `https://${ROOT_DOMAIN}`
 // owns only the email decisions: subjects, templates, and per-type props.
 const handler = createAuthEmailHandler({
   apiKey: process.env.LOVABLE_API_KEY!,
-  from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+  from: `Hayas Client Portal <noreply@${FROM_DOMAIN}>`,
   senderDomain: SENDER_DOMAIN,
   sendUrl: process.env.LOVABLE_SEND_URL,
   emails: {
@@ -43,11 +43,10 @@ const handler = createAuthEmailHandler({
         }),
     },
     magiclink: {
-      subject: 'Your Hayas Client Portal sign-in code',
+      subject: 'Your access code — Hayas Client Portal',
       render: (data) =>
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
-          confirmationUrl: data.url,
           token: data.token ?? '',
         }),
     },
