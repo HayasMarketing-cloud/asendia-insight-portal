@@ -285,10 +285,12 @@ function SystemStatus({
 function EcdbCard({
   latest,
   previous,
+  run,
   loading,
 }: {
   latest: OpsRow | undefined;
   previous: OpsRow | undefined;
+  run: OpsRow | undefined;
   loading: boolean;
 }) {
   const bal = latest?.ecdb_credit_balance ?? null;
@@ -298,45 +300,83 @@ function EcdbCard({
       ? bal - previous.ecdb_credit_balance
       : null;
 
+  const consumptionEntries = run?.credits_consumed
+    ? Object.entries(run.credits_consumed)
+    : [];
+  const labelFor = (k: string) => {
+    const map: Record<string, string> = { ecdb: "ECDB", zoominfo: "ZoomInfo" };
+    return map[k.toLowerCase()] ?? k.charAt(0).toUpperCase() + k.slice(1);
+  };
+
   return (
     <Card className={low ? "border-amber-500/40 bg-amber-500/5" : ""}>
       <CardHeader className="pb-2">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          ECDB credits
+          API credits
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className="h-10 w-32" />
-        ) : (
-          <div
-            className={`text-4xl font-semibold tracking-tight tabular-nums ${
-              low ? "text-amber-700" : ""
-            }`}
-          >
-            {bal != null ? nf.format(bal) : "—"}
+      <CardContent className="space-y-4">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            ECDB balance
           </div>
-        )}
-        {!loading && low && (
-          <p className="mt-2 text-xs text-amber-800">
-            Below the 10,000 alert threshold — top-up recommended before the next
-            monthly run (~1,150 credits per full run).
-          </p>
-        )}
-        {!loading && delta != null && (
-          <p className="mt-2 text-xs text-muted-foreground tabular-nums">
-            {delta === 0
-              ? "No change since last check"
-              : `${delta > 0 ? "+" : "−"}${nf.format(Math.abs(delta))} since ${
-                  previous ? fmtRelative(previous.run_at) : "last check"
-                }`}
-          </p>
-        )}
-        {!loading && bal == null && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Awaiting the first healthcheck.
-          </p>
-        )}
+          {loading ? (
+            <Skeleton className="mt-1 h-9 w-32" />
+          ) : bal != null ? (
+            <div
+              className={`mt-0.5 text-4xl font-semibold tracking-tight tabular-nums ${
+                low ? "text-amber-700" : ""
+              }`}
+            >
+              {nf.format(bal)}
+            </div>
+          ) : (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Balance available after the first daily check.
+            </p>
+          )}
+          {!loading && low && (
+            <p className="mt-2 text-xs text-amber-800">
+              Below the 10,000 alert threshold — top-up recommended before the next
+              monthly run (~1,150 credits per full run).
+            </p>
+          )}
+          {!loading && delta != null && (
+            <p className="mt-2 text-xs text-muted-foreground tabular-nums">
+              {delta === 0
+                ? "No change since last check"
+                : `${delta > 0 ? "+" : "−"}${nf.format(Math.abs(delta))} since ${
+                    previous ? fmtRelative(previous.run_at) : "last check"
+                  }`}
+            </p>
+          )}
+        </div>
+
+        <div className="border-t border-border pt-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Consumption · latest run
+          </div>
+          {loading ? (
+            <Skeleton className="mt-2 h-5 w-40" />
+          ) : consumptionEntries.length > 0 ? (
+            <>
+              <div className="mt-1 text-sm font-medium tabular-nums">
+                {consumptionEntries
+                  .map(([k, v]) => `${labelFor(k)}: ${nf.format(Number(v))}`)
+                  .join(" · ")}
+              </div>
+              {run?.leads_processed != null && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {nf.format(run.leads_processed)} companies processed
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              No runs recorded yet.
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
