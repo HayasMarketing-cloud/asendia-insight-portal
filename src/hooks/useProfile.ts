@@ -18,35 +18,58 @@ export type Account = {
 async function fetchProfileWithAccount() {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
+  console.log("[diag:useProfile] auth user", { id: user?.id, email: user?.email });
   if (!user) return null;
 
-  const { data: profile, error } = await supabase
+  const profileRes = await supabase
     .from("profiles")
     .select("id, account_id, role, full_name, email")
     .eq("id", user.id)
     .maybeSingle();
-  if (error) throw error;
+  console.log("[diag:useProfile] profile query", {
+    data: profileRes.data,
+    error: profileRes.error,
+    status: profileRes.status,
+  });
+  if (profileRes.error) throw profileRes.error;
+  const profile = profileRes.data;
   if (!profile) return { profile: null, account: null };
 
   let account: Account | null = null;
   if (profile.account_id) {
-    const { data: acc } = await supabase
+    const accRes = await supabase
       .from("accounts")
       .select("id, name, slug")
       .eq("id", profile.account_id)
       .maybeSingle();
-    account = acc;
+    console.log("[diag:useProfile] accounts by id", {
+      data: accRes.data,
+      error: accRes.error,
+      status: accRes.status,
+    });
+    account = accRes.data;
   } else if (profile.role === "hayas_admin") {
-    // Phase 1: hayas_admins are cross-account with no switcher yet.
-    // Default to the first (and currently only) account. RLS lets hayas_admins
-    // see all accounts. Future: replace with a stored selection.
-    const { data: accs } = await supabase
+    const accsRes = await supabase
       .from("accounts")
       .select("id, name, slug")
       .order("name", { ascending: true })
       .limit(1);
-    account = accs?.[0] ?? null;
+    console.log("[diag:useProfile] accounts fallback (hayas_admin)", {
+      data: accsRes.data,
+      error: accsRes.error,
+      status: accsRes.status,
+      count: accsRes.data?.length,
+    });
+    account = accsRes.data?.[0] ?? null;
+  } else {
+    console.log("[diag:useProfile] no account_id and role is not hayas_admin", {
+      role: profile.role,
+    });
   }
+  console.log("[diag:useProfile] resolved", {
+    accountId: account?.id ?? null,
+    accountName: account?.name ?? null,
+  });
   return { profile: profile as Profile, account };
 }
 
