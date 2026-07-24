@@ -444,12 +444,6 @@ function LastRunCard({
     );
   }
 
-  const credits = run.credits_consumed
-    ? Object.entries(run.credits_consumed)
-        .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${nf.format(Number(v))}`)
-        .join(" · ")
-    : null;
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
@@ -484,12 +478,6 @@ function LastRunCard({
           />
           <Metric label="Duration" value={fmtDuration(run.duration_seconds)} />
         </div>
-        {credits && (
-          <div className="border-t border-border pt-3 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Credits consumed:</span>{" "}
-            {credits}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
