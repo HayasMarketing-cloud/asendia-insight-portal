@@ -1,11 +1,12 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Activity, BarChart3, LogOut, Target } from "lucide-react";
+import { Activity, BarChart3, ClipboardCheck, LogOut, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveAccount } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 
 const nav = [
   { to: "/leads", label: "Lead Ranking", icon: Target },
+  { to: "/manual-review", label: "Manual Review", icon: ClipboardCheck },
   { to: "/kpis", label: "KPIs", icon: BarChart3 },
   { to: "/ops", label: "Ops Health", icon: Activity },
 ] as const;
