@@ -12,18 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ICP_LABELS,
-  ICP_SHORT_LABELS,
-  INTL_MATURITY_LABELS,
-  GROWTH_LABELS,
-  INTENT_LABELS,
   scoreBand,
   scoreBandClass,
   scoreBandTextClass,
@@ -37,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/manual-review")({
       {
         name: "description",
         content:
-          "Reviewer queue for gated leads: override signals, add notes and trigger a rescore.",
+          "Reviewer queue for gated leads: capture international revenue signals and trigger a rescore.",
       },
     ],
   }),
@@ -67,21 +55,26 @@ type QueueLead = {
   firmographics: Record<string, unknown> | null;
 };
 
-const ICP_OPTIONS = ["icp1", "icp2", "icp3", "out"] as const;
-const INTL_OPTIONS = [
-  "established_icp1",
-  "icp2",
-  "growing",
-  "starting_icp3",
-] as const;
-const GROWTH_OPTIONS = ["high", "med", "low"] as const;
-const INTENT_OPTIONS = ["high", "med", "low", "none"] as const;
+type StateFilter =
+  | "worklist"
+  | "pending"
+  | "in_review"
+  | "confirmed"
+  | "rejected"
+  | "all";
 
-type SignalForm = {
-  asendia_icp_segment: string;
-  international_maturity: string;
-  growth_momentum: string;
-  buyer_intent_signals: string;
+const FILTER_OPTIONS: { value: StateFilter; label: string }[] = [
+  { value: "worklist", label: "Worklist" },
+  { value: "pending", label: "Pending" },
+  { value: "in_review", label: "In review" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "rejected", label: "Rejected" },
+  { value: "all", label: "All" },
+];
+
+type NumericForm = {
+  intl_revenue_share: string;
+  countries_with_revenue: string;
 };
 
 function ManualReviewPage() {
@@ -93,20 +86,33 @@ function ManualReviewPage() {
   const qc = useQueryClient();
   const rescoreFn = useServerFn(requestRescore);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<StateFilter>("worklist");
 
   const queueQ = useQuery({
-    queryKey: ["manual_review_queue", accountId],
+    queryKey: ["manual_review_queue", accountId, filter],
     enabled: !!accountId,
     queryFn: async (): Promise<QueueLead[]> => {
-      const res = await supabase
+      let q = supabase
         .from("leads")
         .select(
           "id, company_name, domain, status, data_source, review_state, review_notes, review_values, reviewed_at, reviewed_by, asendia_icp_segment, international_maturity, growth_momentum, buyer_intent_signals, score_total, score_breakdown, score_last_calculated_at, review_reason, ai_assist, firmographics",
         )
         .eq("account_id", accountId!)
-        .eq("status", "manual_review")
-        .or("review_state.is.null,review_state.eq.in_review")
-        .order("company_name", { ascending: true });
+        .eq("status", "manual_review");
+
+      if (filter === "worklist") {
+        q = q.or("review_state.is.null,review_state.eq.in_review");
+      } else if (filter === "pending") {
+        q = q.is("review_state", null);
+      } else if (filter === "in_review") {
+        q = q.eq("review_state", "in_review");
+      } else if (filter === "confirmed") {
+        q = q.eq("review_state", "confirmed");
+      } else if (filter === "rejected") {
+        q = q.eq("review_state", "rejected");
+      }
+
+      const res = await q.order("company_name", { ascending: true });
       if (res.error) throw res.error;
       return (res.data ?? []) as QueueLead[];
     },
@@ -118,9 +124,11 @@ function ManualReviewPage() {
     [queue, selectedId],
   );
 
-  // Auto-select first when queue loads and nothing chosen.
   useEffect(() => {
-    if (!selectedId && queue.length > 0) setSelectedId(queue[0].id);
+    if (queue.length === 0) return;
+    if (!selectedId || !queue.some((l) => l.id === selectedId)) {
+      setSelectedId(queue[0].id);
+    }
   }, [queue, selectedId]);
 
   return (
@@ -133,7 +141,8 @@ function ManualReviewPage() {
           Manual Review
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Gated leads awaiting reviewer input. Overrides feed the next scoring pass.
+          Gated leads awaiting reviewer input. Confirm writes the two-key
+          review_values consumed by the rescore pipeline.
         </p>
       </header>
 
@@ -152,6 +161,21 @@ function ManualReviewPage() {
             <div className="mt-0.5 text-sm tabular-nums">
               {queueQ.isLoading ? "Loading…" : `${queue.length} leads`}
             </div>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {FILTER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilter(opt.value)}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    filter === opt.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/70"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           {queueQ.isLoading &&
             Array.from({ length: 6 }).map((_, i) => (
@@ -162,7 +186,7 @@ function ManualReviewPage() {
             ))}
           {!queueQ.isLoading && queue.length === 0 && (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              Queue is empty. Nothing awaiting review.
+              No leads match this filter.
             </div>
           )}
           <ul>
@@ -174,9 +198,7 @@ function ManualReviewPage() {
                   <button
                     onClick={() => setSelectedId(l.id)}
                     className={`w-full border-b border-border px-4 py-3 text-left transition-colors ${
-                      active
-                        ? "bg-primary/10"
-                        : "hover:bg-muted/60"
+                      active ? "bg-primary/10" : "hover:bg-muted/60"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -205,10 +227,20 @@ function ManualReviewPage() {
                           In progress
                         </Badge>
                       )}
-                      {l.asendia_icp_segment && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          {ICP_SHORT_LABELS[l.asendia_icp_segment] ??
-                            l.asendia_icp_segment}
+                      {l.review_state === "confirmed" && (
+                        <Badge
+                          variant="outline"
+                          className="border-chart-2/40 bg-chart-2/10 text-[10px] text-chart-2"
+                        >
+                          Confirmed
+                        </Badge>
+                      )}
+                      {l.review_state === "rejected" && (
+                        <Badge
+                          variant="outline"
+                          className="border-destructive/40 bg-destructive/5 text-[10px] text-destructive"
+                        >
+                          Rejected
                         </Badge>
                       )}
                     </div>
@@ -254,6 +286,48 @@ function ManualReviewPage() {
   );
 }
 
+function initialFormFromLead(lead: QueueLead): NumericForm {
+  const rv = (lead.review_values ?? {}) as Record<string, unknown>;
+  const share = rv.intl_revenue_share;
+  const countries = rv.countries_with_revenue;
+  return {
+    intl_revenue_share:
+      typeof share === "number" && Number.isFinite(share) ? String(share) : "",
+    countries_with_revenue:
+      typeof countries === "number" && Number.isFinite(countries)
+        ? String(countries)
+        : "",
+  };
+}
+
+function parseIntlShare(raw: string): {
+  value: number | null;
+  error: string | null;
+} {
+  const t = raw.trim();
+  if (t === "") return { value: null, error: "Required" };
+  const n = Number(t);
+  if (!Number.isFinite(n)) return { value: null, error: "Must be a number" };
+  if (n < 0 || n > 100)
+    return { value: null, error: "Must be between 0 and 100" };
+  const rounded = Math.round(n * 10) / 10;
+  return { value: rounded, error: null };
+}
+
+function parseCountries(raw: string): {
+  value: number | null;
+  error: string | null;
+} {
+  const t = raw.trim();
+  if (t === "") return { value: null, error: "Required" };
+  const n = Number(t);
+  if (!Number.isFinite(n)) return { value: null, error: "Must be a number" };
+  if (!Number.isInteger(n))
+    return { value: null, error: "Must be a whole number" };
+  if (n < 0) return { value: null, error: "Must be zero or more" };
+  return { value: n, error: null };
+}
+
 function ReviewPanel({
   lead,
   isAdmin,
@@ -267,32 +341,23 @@ function ReviewPanel({
   accountSlug: string | null;
   onSaved: () => void;
   onRescoreComplete: () => void;
-  rescoreFn: (opts: { data: { account_slug: string; domain: string; review_values: Record<string, unknown> } }) => Promise<{ status: number; body: unknown }>;
+  rescoreFn: (opts: {
+    data: {
+      account_slug: string;
+      domain: string;
+      review_values: Record<string, unknown>;
+    };
+  }) => Promise<{ status: number; body: unknown }>;
 }) {
-  const initialValues = (lead.review_values ?? {}) as Record<string, unknown>;
-  const [form, setForm] = useState<SignalForm>({
-    asendia_icp_segment:
-      (initialValues.asendia_icp_segment as string) ??
-      lead.asendia_icp_segment ??
-      "",
-    international_maturity:
-      (initialValues.international_maturity as string) ??
-      lead.international_maturity ??
-      "",
-    growth_momentum:
-      (initialValues.growth_momentum as string) ??
-      lead.growth_momentum ??
-      "",
-    buyer_intent_signals:
-      (initialValues.buyer_intent_signals as string) ??
-      lead.buyer_intent_signals ??
-      "",
-  });
+  const [form, setForm] = useState<NumericForm>(() =>
+    initialFormFromLead(lead),
+  );
   const [notes, setNotes] = useState<string>(lead.review_notes ?? "");
-  const [saving, setSaving] = useState<null | "save" | "confirm" | "discard">(
+  const [saving, setSaving] = useState<null | "start" | "reject" | "confirm">(
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [pollState, setPollState] = useState<
     | { kind: "idle" }
     | { kind: "polling"; startedAt: number }
@@ -304,28 +369,51 @@ function ReviewPanel({
   const band = scoreBand(lead.score_total);
   const disabled = !isAdmin || saving !== null || pollState.kind === "polling";
 
-  const buildReviewValues = () => ({
-    asendia_icp_segment: form.asendia_icp_segment || null,
-    international_maturity: form.international_maturity || null,
-    growth_momentum: form.growth_momentum || null,
-    buyer_intent_signals: form.buyer_intent_signals || null,
-  });
+  const shareParsed = parseIntlShare(form.intl_revenue_share);
+  const countriesParsed = parseCountries(form.countries_with_revenue);
+  const confirmValid =
+    shareParsed.error === null && countriesParsed.error === null;
 
-  const writeReview = async (nextState: "in_review" | "confirmed" | "discarded") => {
+  const isStale = (() => {
+    if (!lead.reviewed_at || !lead.score_last_calculated_at) return false;
+    return (
+      new Date(lead.reviewed_at).getTime() <
+      new Date(lead.score_last_calculated_at).getTime()
+    );
+  })();
+
+  const resetForm = () => {
+    setForm(initialFormFromLead(lead));
+    setNotes(lead.review_notes ?? "");
     setError(null);
+    setInfo(null);
+  };
+
+  const writeReview = async (
+    nextState: "in_review" | "confirmed" | "rejected",
+    opts: {
+      includeReviewValues: boolean;
+      reviewValues?: Record<string, unknown>;
+    },
+  ) => {
+    setError(null);
+    setInfo(null);
     const { data: userData } = await supabase.auth.getUser();
     const uid = userData.user?.id ?? null;
     if (!uid) {
       setError("Not signed in.");
       return null;
     }
-    const payload = {
+    const basePayload = {
       review_state: nextState,
       reviewed_by: uid,
       reviewed_at: new Date().toISOString(),
       review_notes: notes.trim() ? notes.trim() : null,
-      review_values: buildReviewValues(),
     };
+    const payload =
+      opts.includeReviewValues && opts.reviewValues
+        ? { ...basePayload, review_values: opts.reviewValues as never }
+        : basePayload;
     const res = await supabase
       .from("leads")
       .update(payload)
@@ -345,16 +433,16 @@ function ReviewPanel({
     return payload;
   };
 
-  const handleSaveDraft = async () => {
-    setSaving("save");
-    const ok = await writeReview("in_review");
+  const handleStartReview = async () => {
+    setSaving("start");
+    const ok = await writeReview("in_review", { includeReviewValues: false });
     setSaving(null);
     if (ok) onSaved();
   };
 
-  const handleDiscard = async () => {
-    setSaving("discard");
-    const ok = await writeReview("discarded");
+  const handleReject = async () => {
+    setSaving("reject");
+    const ok = await writeReview("rejected", { includeReviewValues: false });
     setSaving(null);
     if (ok) onSaved();
   };
@@ -364,9 +452,21 @@ function ReviewPanel({
       setError("Missing account slug or domain — cannot trigger rescore.");
       return;
     }
+    if (!confirmValid) {
+      setError("Fill both numeric fields with valid values before confirming.");
+      return;
+    }
+    const reviewValues = {
+      intl_revenue_share: shareParsed.value,
+      countries_with_revenue: countriesParsed.value,
+    } as Record<string, unknown>;
+
     setSaving("confirm");
     baselineRef.current = lead.score_last_calculated_at;
-    const written = await writeReview("confirmed");
+    const written = await writeReview("confirmed", {
+      includeReviewValues: true,
+      reviewValues,
+    });
     if (!written) {
       setSaving(null);
       return;
@@ -376,9 +476,15 @@ function ReviewPanel({
         data: {
           account_slug: accountSlug,
           domain: lead.domain,
-          review_values: written.review_values,
+          review_values: reviewValues,
         },
       });
+      if (rescore.status === 503) {
+        setInfo("Rescore pipeline not live yet — review saved.");
+        setSaving(null);
+        onSaved();
+        return;
+      }
       if (rescore.status >= 400) {
         setError(
           `Rescore webhook returned ${rescore.status}. Review saved but no rescore triggered.`,
@@ -399,7 +505,6 @@ function ReviewPanel({
     setPollState({ kind: "polling", startedAt: Date.now() });
   };
 
-  // Poll for score_last_calculated_at change vs captured baseline.
   useEffect(() => {
     if (pollState.kind !== "polling") return;
     let cancelled = false;
@@ -443,6 +548,16 @@ function ReviewPanel({
             <div className="mt-0.5 text-sm text-muted-foreground">
               {lead.domain ?? "No domain on file"}
             </div>
+            {isStale && (
+              <div className="mt-2">
+                <Badge
+                  variant="outline"
+                  className="border-chart-4/40 bg-chart-4/10 text-[11px] text-chart-4"
+                >
+                  Reviewed before current data
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <div
@@ -470,7 +585,7 @@ function ReviewPanel({
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-chart-4" />
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-chart-4">
-                Gate reason
+                Why it's here
               </div>
               <div className="mt-0.5">{lead.review_reason}</div>
             </div>
@@ -508,50 +623,38 @@ function ReviewPanel({
 
       <section>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Reviewer overrides
+          Reviewer inputs
         </h3>
         {!isAdmin && (
           <div className="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             Read-only — only admins can save reviews.
           </div>
         )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          These two values are the exact keys the rescore pipeline consumes.
+          Required only to Confirm.
+        </p>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SignalSelect
-            label="ICP segment"
-            value={form.asendia_icp_segment}
-            onChange={(v) => setForm({ ...form, asendia_icp_segment: v })}
-            options={ICP_OPTIONS.map((k) => ({ value: k, label: ICP_LABELS[k] }))}
+          <NumericField
+            label="International revenue share (%)"
+            value={form.intl_revenue_share}
+            onChange={(v) => setForm({ ...form, intl_revenue_share: v })}
+            min={0}
+            max={100}
+            step={0.1}
+            error={form.intl_revenue_share ? shareParsed.error : null}
             disabled={disabled}
+            placeholder="0.0 – 100.0"
           />
-          <SignalSelect
-            label="International maturity"
-            value={form.international_maturity}
-            onChange={(v) => setForm({ ...form, international_maturity: v })}
-            options={INTL_OPTIONS.map((k) => ({
-              value: k,
-              label: INTL_MATURITY_LABELS[k],
-            }))}
+          <NumericField
+            label="Countries with revenue"
+            value={form.countries_with_revenue}
+            onChange={(v) => setForm({ ...form, countries_with_revenue: v })}
+            min={0}
+            step={1}
+            error={form.countries_with_revenue ? countriesParsed.error : null}
             disabled={disabled}
-          />
-          <SignalSelect
-            label="Growth momentum"
-            value={form.growth_momentum}
-            onChange={(v) => setForm({ ...form, growth_momentum: v })}
-            options={GROWTH_OPTIONS.map((k) => ({
-              value: k,
-              label: GROWTH_LABELS[k],
-            }))}
-            disabled={disabled}
-          />
-          <SignalSelect
-            label="Buyer intent"
-            value={form.buyer_intent_signals}
-            onChange={(v) => setForm({ ...form, buyer_intent_signals: v })}
-            options={INTENT_OPTIONS.map((k) => ({
-              value: k,
-              label: INTENT_LABELS[k],
-            }))}
-            disabled={disabled}
+            placeholder="0, 1, 2, …"
           />
         </div>
         <div className="mt-4">
@@ -614,26 +717,29 @@ function ReviewPanel({
             </span>
           )}
           <Button
-            variant="outline"
-            onClick={handleDiscard}
-            disabled={disabled}
+            variant="ghost"
+            onClick={resetForm}
+            disabled={saving !== null || pollState.kind === "polling"}
           >
-            {saving === "discard" ? (
+            Reset form
+          </Button>
+          <Button variant="outline" onClick={handleReject} disabled={disabled}>
+            {saving === "reject" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : null}
-            Discard
+            Reject
           </Button>
           <Button
             variant="secondary"
-            onClick={handleSaveDraft}
+            onClick={handleStartReview}
             disabled={disabled}
           >
-            {saving === "save" ? (
+            {saving === "start" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : null}
-            Save progress
+            Start review
           </Button>
-          <Button onClick={handleConfirm} disabled={disabled}>
+          <Button onClick={handleConfirm} disabled={disabled || !confirmValid}>
             {saving === "confirm" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : null}
@@ -642,6 +748,11 @@ function ReviewPanel({
         </div>
       </footer>
 
+      {info && (
+        <div className="rounded-md border border-chart-4/40 bg-chart-4/5 p-3 text-sm text-chart-4">
+          {info}
+        </div>
+      )}
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           {error}
@@ -651,38 +762,45 @@ function ReviewPanel({
   );
 }
 
-function SignalSelect({
+function NumericField({
   label,
   value,
   onChange,
-  options,
+  min,
+  max,
+  step,
+  error,
   disabled,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: { value: string; label: string }[];
+  min?: number;
+  max?: number;
+  step?: number;
+  error?: string | null;
   disabled?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div>
       <label className="text-xs text-muted-foreground">{label}</label>
-      <Select
-        value={value || undefined}
-        onValueChange={(v) => onChange(v)}
+      <Input
+        type="number"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        min={min}
+        max={max}
+        step={step}
         disabled={disabled}
-      >
-        <SelectTrigger className="mt-1 w-full">
-          <SelectValue placeholder="Not set" />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        placeholder={placeholder}
+        className={`mt-1 ${error ? "border-destructive" : ""}`}
+      />
+      {error && (
+        <div className="mt-1 text-[11px] text-destructive">{error}</div>
+      )}
     </div>
   );
 }
@@ -693,7 +811,11 @@ function humanizeKey(key: string) {
 
 function formatValue(value: unknown): string {
   if (value == null) return "—";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  )
     return String(value);
   try {
     return JSON.stringify(value);
