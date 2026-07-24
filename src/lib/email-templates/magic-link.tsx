@@ -2,11 +2,9 @@ import * as React from 'react'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Preview,
   Section,
@@ -15,25 +13,23 @@ import {
 
 interface MagicLinkEmailProps {
   siteName: string
-  confirmationUrl: string
   token?: string
 }
 
 export const MagicLinkEmail = ({
   siteName,
-  confirmationUrl,
   token,
 }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your {siteName} sign-in code{token ? `: ${token}` : ''}</Preview>
+    <Preview>Your {siteName} access code{token ? `: ${token}` : ''}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Text style={brand}>HAYAS MARKETING</Text>
-        <Heading style={h1}>Your sign-in code</Heading>
+        <Heading style={h1}>Your access code</Heading>
         <Text style={text}>
           Enter this 6-digit code in the {siteName} sign-in screen to continue.
-          The code expires shortly.
+          This code expires in 10 minutes.
         </Text>
 
         {token ? (
@@ -41,15 +37,6 @@ export const MagicLinkEmail = ({
             <Text style={codeStyle}>{token}</Text>
           </Section>
         ) : null}
-
-        <Hr style={hr} />
-
-        <Text style={smallText}>
-          Prefer a one-click link? Use the button below on the same device.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Sign in to {siteName}
-        </Button>
 
         <Text style={footer}>
           If you didn't request this, you can safely ignore this email — no
