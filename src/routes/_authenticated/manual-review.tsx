@@ -550,14 +550,19 @@ function ReviewPanel({
       }
       const res = await supabase
         .from("leads")
-        .select("score_last_calculated_at")
+        .select("score_last_calculated_at, score_total, status, sugarcrm_url")
         .eq("id", lead.id)
         .maybeSingle();
       if (cancelled) return;
       const latest = res.data?.score_last_calculated_at ?? null;
       if (latest && latest !== baselineRef.current) {
         setPollState({ kind: "done" });
-        setTimeout(() => onRescoreComplete(), 700);
+        const nextOutcome: RescoreOutcome = {
+          score_total: res.data?.score_total ?? null,
+          status: res.data?.status ?? "unknown",
+          sugarcrm_url: res.data?.sugarcrm_url ?? null,
+        };
+        onRescoreComplete(nextOutcome);
         return;
       }
       setTimeout(tick, INTERVAL_MS);
