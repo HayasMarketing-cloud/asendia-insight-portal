@@ -273,7 +273,7 @@ function KpisPage() {
             ) : (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={histogram} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                  <BarChart data={histogram} margin={{ top: 24, right: 16, left: 0, bottom: 4 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="bin" fontSize={10} tickLine={false} />
                     <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} width={28} />
