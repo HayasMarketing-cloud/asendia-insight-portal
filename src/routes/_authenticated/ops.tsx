@@ -454,11 +454,16 @@ function LastRunCard({
           <Tooltip>
             <TooltipTrigger asChild>
               <p className="mt-1 text-xs text-muted-foreground">
-                {fmtDate(run.run_at)} · engine {dash(run.engine_version)}
-                {run.market ? ` · ${run.market}` : ""}
+                {fmtDate(run.run_at)}
+                {run.market ? ` · ${run.market.toUpperCase()}` : ""}
               </p>
             </TooltipTrigger>
-            <TooltipContent>{new Date(run.run_at).toUTCString()}</TooltipContent>
+            <TooltipContent>
+              <div>{new Date(run.run_at).toUTCString()}</div>
+              <div className="mt-0.5 text-muted-foreground">
+                Engine {dash(run.engine_version)}
+              </div>
+            </TooltipContent>
           </Tooltip>
         </div>
         <StatusBadge status={run.run_status} />
