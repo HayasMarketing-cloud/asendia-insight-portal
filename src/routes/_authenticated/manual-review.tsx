@@ -54,7 +54,25 @@ type QueueLead = {
   review_reason: string | null;
   ai_assist: Record<string, unknown> | null;
   firmographics: Record<string, unknown> | null;
+  sugarcrm_url: string | null;
 };
+
+type RescoreOutcome = {
+  score_total: number | null;
+  status: string;
+  sugarcrm_url: string | null;
+};
+
+const OUTCOME_LABELS: Record<string, string> = {
+  sql: "Sent to sales",
+  mql: "Added to nurture sequence",
+  discarded: "Discarded by score",
+  manual_review: "Returned to manual review",
+};
+
+function outcomeLabel(status: string): string {
+  return OUTCOME_LABELS[status] ?? `Status: ${status}`;
+}
 
 type StateFilter =
   | "worklist"
@@ -88,6 +106,7 @@ function ManualReviewPage() {
   const rescoreFn = useServerFn(requestRescore);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<StateFilter>("worklist");
+  const [rescored, setRescored] = useState<Record<string, RescoreOutcome>>({});
 
   const queueQ = useQuery({
     queryKey: ["manual_review_queue", accountId, filter],
@@ -96,7 +115,7 @@ function ManualReviewPage() {
       let q = supabase
         .from("leads")
         .select(
-          "id, company_name, domain, status, data_source, review_state, review_notes, review_values, reviewed_at, reviewed_by, asendia_icp_segment, international_maturity, growth_momentum, buyer_intent_signals, score_total, score_breakdown, score_last_calculated_at, review_reason, ai_assist, firmographics",
+          "id, company_name, domain, status, data_source, review_state, review_notes, review_values, reviewed_at, reviewed_by, asendia_icp_segment, international_maturity, growth_momentum, buyer_intent_signals, score_total, score_breakdown, score_last_calculated_at, review_reason, ai_assist, firmographics, sugarcrm_url",
         )
         .eq("account_id", accountId!)
         .eq("status", "manual_review");
@@ -244,6 +263,14 @@ function ManualReviewPage() {
                           Rejected
                         </Badge>
                       )}
+                      {rescored[l.id] && (
+                        <Badge
+                          variant="outline"
+                          className="border-chart-2/60 bg-chart-2/15 text-[10px] text-chart-2"
+                        >
+                          Rescored → {outcomeLabel(rescored[l.id].status)}
+                        </Badge>
+                      )}
                     </div>
                   </button>
                 </li>
@@ -266,13 +293,14 @@ function ManualReviewPage() {
               lead={selected}
               isAdmin={isAdmin}
               accountSlug={account?.slug ?? null}
+              outcome={rescored[selected.id] ?? null}
               onSaved={() => {
                 qc.invalidateQueries({
                   queryKey: ["manual_review_queue", accountId],
                 });
               }}
-              onRescoreComplete={() => {
-                setSelectedId(null);
+              onRescoreComplete={(outcome) => {
+                setRescored((prev) => ({ ...prev, [selected.id]: outcome }));
                 qc.invalidateQueries({
                   queryKey: ["manual_review_queue", accountId],
                 });
@@ -333,6 +361,7 @@ function ReviewPanel({
   lead,
   isAdmin,
   accountSlug,
+  outcome,
   onSaved,
   onRescoreComplete,
   rescoreFn,
@@ -340,8 +369,9 @@ function ReviewPanel({
   lead: QueueLead;
   isAdmin: boolean;
   accountSlug: string | null;
+  outcome: RescoreOutcome | null;
   onSaved: () => void;
-  onRescoreComplete: () => void;
+  onRescoreComplete: (outcome: RescoreOutcome) => void;
   rescoreFn: (opts: {
     data: {
       account_slug: string;
@@ -520,14 +550,19 @@ function ReviewPanel({
       }
       const res = await supabase
         .from("leads")
-        .select("score_last_calculated_at")
+        .select("score_last_calculated_at, score_total, status, sugarcrm_url")
         .eq("id", lead.id)
         .maybeSingle();
       if (cancelled) return;
       const latest = res.data?.score_last_calculated_at ?? null;
       if (latest && latest !== baselineRef.current) {
         setPollState({ kind: "done" });
-        setTimeout(() => onRescoreComplete(), 700);
+        const nextOutcome: RescoreOutcome = {
+          score_total: res.data?.score_total ?? null,
+          status: res.data?.status ?? "unknown",
+          sugarcrm_url: res.data?.sugarcrm_url ?? null,
+        };
+        onRescoreComplete(nextOutcome);
         return;
       }
       setTimeout(tick, INTERVAL_MS);
@@ -540,6 +575,35 @@ function ReviewPanel({
 
   return (
     <div className="space-y-6">
+      {outcome && (
+        <div className="rounded-md border border-chart-2/50 bg-chart-2/10 p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-chart-2" />
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold uppercase tracking-wider text-chart-2">
+                Rescore complete
+              </div>
+              <div className="mt-1 text-base font-semibold text-foreground">
+                Rescored:{" "}
+                <span className="tabular-nums">
+                  {outcome.score_total ?? "—"}
+                </span>{" "}
+                — {outcomeLabel(outcome.status)}
+              </div>
+              {outcome.sugarcrm_url && (
+                <a
+                  href={outcome.sugarcrm_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary underline underline-offset-2"
+                >
+                  Open in SugarCRM ↗
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <header>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
