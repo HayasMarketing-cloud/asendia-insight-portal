@@ -263,6 +263,14 @@ function ManualReviewPage() {
                           Rejected
                         </Badge>
                       )}
+                      {rescored[l.id] && (
+                        <Badge
+                          variant="outline"
+                          className="border-chart-2/60 bg-chart-2/15 text-[10px] text-chart-2"
+                        >
+                          Rescored → {outcomeLabel(rescored[l.id].status)}
+                        </Badge>
+                      )}
                     </div>
                   </button>
                 </li>
