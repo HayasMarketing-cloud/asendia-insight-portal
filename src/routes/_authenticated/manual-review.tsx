@@ -1,3 +1,4 @@
+// no-op: force republish to pick up updated N8N_RESCORE_URL secret
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
