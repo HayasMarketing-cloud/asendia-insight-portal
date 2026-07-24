@@ -153,11 +153,12 @@ function ManualReviewPage() {
   );
 
   useEffect(() => {
+    if (snapshot) return;
     if (queue.length === 0) return;
     if (!selectedId || !queue.some((l) => l.id === selectedId)) {
       setSelectedId(queue[0].id);
     }
-  }, [queue, selectedId]);
+  }, [queue, selectedId, snapshot]);
 
   return (
     <div className="flex h-screen flex-col p-8">
