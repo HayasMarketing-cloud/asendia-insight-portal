@@ -574,12 +574,23 @@ function ReviewPanel({
       setSaving(null);
       return;
     }
+    setSaving(null);
+    setPollState({ kind: "polling", startedAt: Date.now() });
     try {
+      const firmo = lead.firmographics;
+      const includeFirmo =
+        firmo != null &&
+        typeof firmo === "object" &&
+        !Array.isArray(firmo) &&
+        typeof (firmo as Record<string, unknown>).revenue === "number";
       const rescore = await rescoreFn({
         data: {
           account_slug: accountSlug,
           domain: lead.domain,
           review_values: reviewValues,
+          ...(includeFirmo
+            ? { firmographics: firmo as Record<string, unknown> }
+            : {}),
         },
       });
       if (rescore.status === 503) {
