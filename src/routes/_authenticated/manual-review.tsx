@@ -81,6 +81,13 @@ function outcomeLabel(status: string): string {
   return OUTCOME_LABELS[status] ?? `Status: ${status}`;
 }
 
+function outcomeLabelFor(status: string, sugarcrmUrl: string | null): string {
+  if (status === "sql" && !sugarcrmUrl) return "Sales Qualified";
+  return outcomeLabel(status);
+}
+
+const SQL_PREGOLIVE_SUFFIX = "SugarCRM record will be created at go-live";
+
 type StateFilter =
   | "worklist"
   | "pending"
@@ -277,7 +284,7 @@ function ManualReviewPage() {
                           variant="outline"
                           className="border-chart-2/60 bg-chart-2/15 text-[10px] text-chart-2"
                         >
-                          Rescored → {outcomeLabel(rescored[l.id].status)}
+                          Rescored → {outcomeLabelFor(rescored[l.id].status, rescored[l.id].sugarcrm_url)}
                         </Badge>
                       )}
                     </div>
@@ -568,11 +575,20 @@ function ReviewPanel({
       return;
     }
     try {
+      const firmo = lead.firmographics;
+      const includeFirmo =
+        firmo != null &&
+        typeof firmo === "object" &&
+        !Array.isArray(firmo) &&
+        typeof (firmo as Record<string, unknown>).revenue === "number";
       const rescore = await rescoreFn({
         data: {
           account_slug: accountSlug,
           domain: lead.domain,
           review_values: reviewValues,
+          ...(includeFirmo
+            ? { firmographics: firmo as Record<string, unknown> }
+            : {}),
         },
       });
       if (rescore.status === 503) {
@@ -653,7 +669,12 @@ function ReviewPanel({
                 <span className="tabular-nums">
                   {outcome.score_total ?? "—"}
                 </span>{" "}
-                — {outcomeLabel(outcome.status)}
+                — {outcomeLabelFor(outcome.status, outcome.sugarcrm_url)}
+                {outcome.status === "sql" && !outcome.sugarcrm_url && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    · {SQL_PREGOLIVE_SUFFIX}
+                  </span>
+                )}
               </div>
               {outcome.sugarcrm_url && (
                 <a
@@ -999,7 +1020,12 @@ function OutcomeSnapshotView({
               <span className="tabular-nums">
                 {outcome.score_total ?? "—"}
               </span>{" "}
-              — {outcomeLabel(outcome.status)}
+              — {outcomeLabelFor(outcome.status, outcome.sugarcrm_url)}
+              {outcome.status === "sql" && !outcome.sugarcrm_url && (
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  · {SQL_PREGOLIVE_SUFFIX}
+                </span>
+              )}
             </div>
             {outcome.sugarcrm_url && (
               <a

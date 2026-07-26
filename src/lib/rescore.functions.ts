@@ -6,6 +6,7 @@ const inputSchema = z.object({
   account_slug: z.string().trim().min(1).max(100),
   domain: z.string().trim().min(1).max(253),
   review_values: z.record(z.string(), z.unknown()),
+  firmographics: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const requestRescore = createServerFn({ method: "POST" })
@@ -32,6 +33,7 @@ export const requestRescore = createServerFn({ method: "POST" })
         domain: data.domain,
         review_values: data.review_values,
         reviewed_by: context.userId,
+        ...(data.firmographics ? { firmographics: data.firmographics } : {}),
       }),
     });
 
