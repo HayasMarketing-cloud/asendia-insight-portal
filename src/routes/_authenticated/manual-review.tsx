@@ -414,7 +414,7 @@ function ReviewPanel({
     initialFormFromLead(lead),
   );
   const [notes, setNotes] = useState<string>(lead.review_notes ?? "");
-  const [saving, setSaving] = useState<null | "start" | "reject" | "confirm">(
+  const [saving, setSaving] = useState<null | "start" | "reject" | "confirm" | "release">(
     null,
   );
   const [error, setError] = useState<string | null>(null);
