@@ -508,6 +508,41 @@ function ReviewPanel({
     if (ok) onSaved();
   };
 
+  const handleRelease = async () => {
+    if (
+      !window.confirm(
+        "Release this lead back to Pending? Your claim will be removed; saved notes are kept.",
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setSaving("release");
+    const res = await supabase
+      .from("leads")
+      .update({
+        review_state: null,
+        reviewed_by: null,
+        reviewed_at: null,
+      })
+      .eq("id", lead.id)
+      .select("id")
+      .maybeSingle();
+    setSaving(null);
+    if (res.error) {
+      setError(res.error.message);
+      return;
+    }
+    if (!res.data) {
+      setError(
+        "Update denied by row-level security. Only admins can release reviews.",
+      );
+      return;
+    }
+    onSaved();
+  };
+
   const handleConfirm = async () => {
     if (!accountSlug || !lead.domain) {
       setError("Missing account slug or domain — cannot trigger rescore.");
