@@ -574,8 +574,6 @@ function ReviewPanel({
       setSaving(null);
       return;
     }
-    setSaving(null);
-    setPollState({ kind: "polling", startedAt: Date.now() });
     try {
       const firmo = lead.firmographics;
       const includeFirmo =
