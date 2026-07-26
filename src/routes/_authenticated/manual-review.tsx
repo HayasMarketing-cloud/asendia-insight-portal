@@ -853,6 +853,18 @@ function ReviewPanel({
           >
             Reset form
           </Button>
+          {lead.review_state === "in_review" && (
+            <Button
+              variant="outline"
+              onClick={handleRelease}
+              disabled={disabled}
+            >
+              {saving === "release" ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              Release
+            </Button>
+          )}
           <Button variant="outline" onClick={handleReject} disabled={disabled}>
             {saving === "reject" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
