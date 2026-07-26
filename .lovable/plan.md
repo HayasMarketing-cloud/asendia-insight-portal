@@ -1,51 +1,41 @@
-## Manual Review — corrections (approved v2 + Start-review clarification)
+## Scope
 
-Frontend-only edits to `src/routes/_authenticated/manual-review.tsx`. No schema, RLS, grant, or `rescore.functions.ts` changes.
+Frontend-only refinement of the existing `TrendDelta` component in `src/routes/_authenticated/leads.tsx`. The Sparkline column was already replaced with `TrendDelta` in the previous turn, but three spec points are not yet implemented:
 
-### 1. Reviewer form — 2 numeric inputs replace 4 dropdowns
+1. Explicit "current score NULL → —" branch (needs the lead's current `score_total`, not just the history array).
+2. "— no change" wording (currently renders a bare "—", indistinguishable from the null case).
+3. Tooltip on the delta showing previous score, its date in Europe/London, and `engine_version` when it differs from the current one.
 
-Remove ICP segment, International maturity, Growth momentum, Buyer intent selects (engine outputs).
+No changes to queries, schema, RLS, routes, or to the lead detail Sheet timeline.
 
-Add two numeric inputs, pre-filled from `lead.review_values` when both keys exist as numbers:
+## Changes in `src/routes/_authenticated/leads.tsx`
 
-- `intl_revenue_share` — `<Input type="number" step="0.1" min="0" max="100">`; parsed to one-decimal number.
-- `countries_with_revenue` — `<Input type="number" step="1" min="0">`; parsed to non-negative integer.
+1. Extend `TrendDelta` props to `{ points: SparkPoint[]; currentScore: number | null }`.
+2. Branch order:
+   - `currentScore == null` → muted `—`.
+   - `scored.length === 0` → muted `—` (defensive; should not happen when currentScore is set).
+   - `scored.length === 1` → muted italic `First run`.
+   - Compute `delta = round((latest − prev) * 10) / 10`.
+   - `delta === 0` → muted `— no change`.
+   - Otherwise `▲ +X.X` (chart-2) or `▼ −X.X` (destructive), one decimal, subtle.
+3. Wrap the rendered delta/label (all non-null branches except the initial null) in a shadcn `Tooltip` whose content shows:
+   - `Previous: <prev score>`
+   - `<formatLondon(prev.recorded_at)>` (reuse helper from `@/lib/lead-presentation`).
+   - `Engine <prev.engine_version> → <latest.engine_version>` only when the two differ and both are non-null.
+   For "First run", the tooltip may be omitted (no prior data).
+4. Update the call site in the table body to pass `currentScore={lead.score_total}`.
 
-Inline validation errors appear only after the user has typed in that field. Fields are optional for Start review and Reject; Confirm requires both valid.
+## Technical notes
 
-### 2. Actions — approved set
+- Reuse existing batched `lead_score_history` query — no new queries.
+- `formatLondon` already imported from `@/lib/lead-presentation`.
+- Tooltip primitives (`Tooltip`, `TooltipTrigger`, `TooltipContent`) already imported in this file (used by the score bar).
 
-Footer order: Reset form · Reject · Start review · Confirm & rescore.
+## Verification
 
-- **Reset form** — local only. Restores inputs and notes to `lead.review_values` / `lead.review_notes`. No DB write. Replaces "Discard".
-- **Start review** — writes exactly: `review_state='in_review'`, `reviewed_by=auth.uid()`, `reviewed_at=now()`, `review_notes` (trimmed or null). **Does NOT write `review_values`.** Purpose: claim before researching. Numeric fields are not validated for this action.
-- **Reject** — writes exactly: `review_state='rejected'`, `reviewed_by`, `reviewed_at`, `review_notes` (trimmed or null). **Does NOT write `review_values`.** Does not touch `status`.
-- **Confirm & rescore** — validates both numeric fields, then writes the 5-column set including `review_values = { intl_revenue_share, countries_with_revenue }` (exact two-key shape, numbers, never null-written, never partial). Then `requestRescore({ account_slug, domain, review_values })` with baseline-captured poll on `score_last_calculated_at`.
+- Typecheck.
+- Expected on current production data: most rows `First run`; `crepprotect.com` shows `▼ −32.1`; `111skin.com` shows `First run` (its prior score was null, so the only scored history entry is the current 30.62).
 
-Guarantee held by construction: `review_values` is written only inside Confirm's payload builder, from validated numbers → always absent or exact 2-key shape.
+## Publish
 
-Admin gate unchanged (only `admin` / `hayas_admin` can write). DB check confirmed: `review_state` is plain `text`, no CHECK constraint, so `'rejected'` writes cleanly.
-
-### 3. Confirm 503 branch
-
-When `rescoreFn` returns `status === 503` (verified in `src/lib/rescore.functions.ts` line 18: `"rescore webhook not configured yet"`), show the info banner literal: `Rescore pipeline not live yet — review saved.` Review is already persisted; no poll starts; invalidate queue. Other `status >= 400` keep the existing generic message. Thrown errors keep the existing catch branch.
-
-### 4. Gate reason header
-
-Rename literal `GATE REASON` → `Why it's here` inside the alert block. Render `lead.review_reason` verbatim — no translation, no formatting.
-
-### 5. State filter
-
-Add segmented control above the queue with: Worklist (default, `review_state IS NULL OR = 'in_review'`) · Pending (`IS NULL`) · In review (`= 'in_review'`) · Confirmed (`= 'confirmed'`) · Rejected (`= 'rejected'`) · All. `status='manual_review'` stays as outer constraint for every option. Filter is part of the React Query key. Selection auto-advances to first item of the filtered list when it changes.
-
-### 6. Stale-review badge
-
-When `lead.reviewed_at` and `lead.score_last_calculated_at` are both non-null and `reviewed_at < score_last_calculated_at`, render a small badge under the domain: `Reviewed before current data` (chart-4 outline styling, matching existing "In progress" badge).
-
-### Out of scope
-
-Queue count, absent AI placeholder, `— /130` empty score, not-reviewed footer state — unchanged.
-
-### Publish
-
-After edits, publish to production. User re-verifies before any real review.
+Publish after the edit lands.
