@@ -500,7 +500,7 @@ function LeadRankingPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <TrendDelta points={points} />
+                        <TrendDelta points={points} currentScore={lead.score_total} />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
