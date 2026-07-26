@@ -81,6 +81,13 @@ function outcomeLabel(status: string): string {
   return OUTCOME_LABELS[status] ?? `Status: ${status}`;
 }
 
+function outcomeLabelFor(status: string, sugarcrmUrl: string | null): string {
+  if (status === "sql" && !sugarcrmUrl) return "Sales Qualified";
+  return outcomeLabel(status);
+}
+
+const SQL_PREGOLIVE_SUFFIX = "SugarCRM record will be created at go-live";
+
 type StateFilter =
   | "worklist"
   | "pending"
