@@ -889,6 +889,13 @@ function ReviewPanel({
           </Button>
         </div>
       </footer>
+      {lead.review_state == null && (
+        <div className="text-xs text-muted-foreground">
+          Start review claims this lead (marks it as yours while you research).
+          Data is only saved when you Confirm.
+        </div>
+      )}
+
 
       {info && (
         <div className="rounded-md border border-chart-4/40 bg-chart-4/5 p-3 text-sm text-chart-4">
