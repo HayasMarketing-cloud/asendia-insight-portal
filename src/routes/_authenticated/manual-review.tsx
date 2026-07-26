@@ -1020,7 +1020,12 @@ function OutcomeSnapshotView({
               <span className="tabular-nums">
                 {outcome.score_total ?? "—"}
               </span>{" "}
-              — {outcomeLabel(outcome.status)}
+              — {outcomeLabelFor(outcome.status, outcome.sugarcrm_url)}
+              {outcome.status === "sql" && !outcome.sugarcrm_url && (
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  · {SQL_PREGOLIVE_SUFFIX}
+                </span>
+              )}
             </div>
             {outcome.sugarcrm_url && (
               <a
