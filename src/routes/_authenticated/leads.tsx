@@ -646,11 +646,25 @@ function SortableHead({
   );
 }
 
-function TrendDelta({ points }: { points: SparkPoint[] }) {
-  const scored = points.filter(
-    (p): p is SparkPoint & { score_total: number } =>
-      typeof p.score_total === "number" && Number.isFinite(p.score_total),
-  );
+function TrendDelta({
+  points,
+  currentScore,
+}: {
+  points: SparkPoint[];
+  currentScore: number | null;
+}) {
+  if (currentScore == null) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  const scored = points
+    .filter(
+      (p): p is SparkPoint & { score_total: number } =>
+        typeof p.score_total === "number" && Number.isFinite(p.score_total),
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
+    );
   if (scored.length === 0) {
     return <span className="text-muted-foreground">—</span>;
   }
@@ -659,27 +673,61 @@ function TrendDelta({ points }: { points: SparkPoint[] }) {
       <span className="text-xs italic text-muted-foreground">First run</span>
     );
   }
-  const latest = scored[scored.length - 1].score_total;
-  const prev = scored[scored.length - 2].score_total;
-  const delta = Math.round((latest - prev) * 10) / 10;
+  const latest = scored[scored.length - 1];
+  const prev = scored[scored.length - 2];
+  const delta = Math.round((latest.score_total - prev.score_total) * 10) / 10;
+  const engineChanged =
+    latest.engine_version != null &&
+    prev.engine_version != null &&
+    latest.engine_version !== prev.engine_version;
+
+  const tooltip = (
+    <TooltipContent>
+      <div className="text-xs">
+        Previous:{" "}
+        <span className="font-medium tabular-nums">{prev.score_total}</span>
+      </div>
+      <div className="text-[10px] text-muted-foreground">
+        {formatLondon(prev.recorded_at)}
+      </div>
+      {engineChanged && (
+        <div className="mt-0.5 text-[10px] text-muted-foreground">
+          Engine {prev.engine_version} → {latest.engine_version}
+        </div>
+      )}
+    </TooltipContent>
+  );
+
   if (delta === 0) {
-    return <span className="text-muted-foreground">—</span>;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-sm text-muted-foreground">— no change</span>
+        </TooltipTrigger>
+        {tooltip}
+      </Tooltip>
+    );
   }
   const up = delta > 0;
   return (
-    <span
-      className={`inline-flex items-center gap-0.5 text-sm font-medium tabular-nums ${
-        up ? "text-chart-2" : "text-destructive"
-      }`}
-    >
-      {up ? (
-        <ArrowUp className="h-3.5 w-3.5" />
-      ) : (
-        <ArrowDown className="h-3.5 w-3.5" />
-      )}
-      {up ? "+" : "−"}
-      {Math.abs(delta).toFixed(1)}
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`inline-flex items-center gap-0.5 text-sm font-medium tabular-nums ${
+            up ? "text-chart-2" : "text-destructive"
+          }`}
+        >
+          {up ? (
+            <ArrowUp className="h-3.5 w-3.5" />
+          ) : (
+            <ArrowDown className="h-3.5 w-3.5" />
+          )}
+          {up ? "+" : "−"}
+          {Math.abs(delta).toFixed(1)}
+        </span>
+      </TooltipTrigger>
+      {tooltip}
+    </Tooltip>
   );
 }
 
