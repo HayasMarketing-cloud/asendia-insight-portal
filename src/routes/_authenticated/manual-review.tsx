@@ -414,7 +414,7 @@ function ReviewPanel({
     initialFormFromLead(lead),
   );
   const [notes, setNotes] = useState<string>(lead.review_notes ?? "");
-  const [saving, setSaving] = useState<null | "start" | "reject" | "confirm">(
+  const [saving, setSaving] = useState<null | "start" | "reject" | "confirm" | "release">(
     null,
   );
   const [error, setError] = useState<string | null>(null);
@@ -506,6 +506,41 @@ function ReviewPanel({
     const ok = await writeReview("rejected", { includeReviewValues: false });
     setSaving(null);
     if (ok) onSaved();
+  };
+
+  const handleRelease = async () => {
+    if (
+      !window.confirm(
+        "Release this lead back to Pending? Your claim will be removed; saved notes are kept.",
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setSaving("release");
+    const res = await supabase
+      .from("leads")
+      .update({
+        review_state: null,
+        reviewed_by: null,
+        reviewed_at: null,
+      })
+      .eq("id", lead.id)
+      .select("id")
+      .maybeSingle();
+    setSaving(null);
+    if (res.error) {
+      setError(res.error.message);
+      return;
+    }
+    if (!res.data) {
+      setError(
+        "Update denied by row-level security. Only admins can release reviews.",
+      );
+      return;
+    }
+    onSaved();
   };
 
   const handleConfirm = async () => {
@@ -818,6 +853,18 @@ function ReviewPanel({
           >
             Reset form
           </Button>
+          {lead.review_state === "in_review" && (
+            <Button
+              variant="outline"
+              onClick={handleRelease}
+              disabled={disabled}
+            >
+              {saving === "release" ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              Release
+            </Button>
+          )}
           <Button variant="outline" onClick={handleReject} disabled={disabled}>
             {saving === "reject" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -842,6 +889,13 @@ function ReviewPanel({
           </Button>
         </div>
       </footer>
+      {lead.review_state == null && (
+        <div className="text-xs text-muted-foreground">
+          Start review claims this lead (marks it as yours while you research).
+          Data is only saved when you Confirm.
+        </div>
+      )}
+
 
       {info && (
         <div className="rounded-md border border-chart-4/40 bg-chart-4/5 p-3 text-sm text-chart-4">
