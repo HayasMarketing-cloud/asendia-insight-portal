@@ -33,6 +33,7 @@ export const requestRescore = createServerFn({ method: "POST" })
         domain: data.domain,
         review_values: data.review_values,
         reviewed_by: context.userId,
+        ...(data.firmographics ? { firmographics: data.firmographics } : {}),
       }),
     });
 
