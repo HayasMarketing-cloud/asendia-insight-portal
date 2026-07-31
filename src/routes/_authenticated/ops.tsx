@@ -396,7 +396,14 @@ function EcdbCard({
                   {nf.format(run.leads_processed)} companies processed
                 </p>
               )}
+              {runsOfMargin != null && (
+                <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                  ≈ {nf.format(runsOfMargin)} runs of margin at last run's
+                  consumption
+                </p>
+              )}
             </>
+
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
               No runs recorded yet.
