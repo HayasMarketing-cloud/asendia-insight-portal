@@ -294,7 +294,10 @@ function EcdbCard({
   loading: boolean;
 }) {
   const bal = latest?.ecdb_credit_balance ?? null;
-  const low = bal != null && bal < 10_000;
+  const WARN = 1_600;
+  const CRIT = 1_100;
+  const critical = bal != null && bal < CRIT;
+  const warning = bal != null && bal < WARN && !critical;
   const delta =
     bal != null && previous?.ecdb_credit_balance != null
       ? bal - previous.ecdb_credit_balance
@@ -307,6 +310,16 @@ function EcdbCard({
     const map: Record<string, string> = { ecdb: "ECDB", zoominfo: "ZoomInfo" };
     return map[k.toLowerCase()] ?? k.charAt(0).toUpperCase() + k.slice(1);
   };
+
+  // credits_consumed shape (verified on latest run_summary): { "ecdb": 534, "zoominfo": 81 }
+  const ecdbConsumedRaw = consumptionEntries.find(
+    ([k]) => k.toLowerCase() === "ecdb",
+  )?.[1];
+  const ecdbConsumed = Number(ecdbConsumedRaw);
+  const runsOfMargin =
+    bal != null && Number.isFinite(ecdbConsumed) && ecdbConsumed > 0
+      ? Math.floor(bal / ecdbConsumed)
+      : null;
 
   return (
     <Card className={low ? "border-amber-500/40 bg-amber-500/5" : ""}>
