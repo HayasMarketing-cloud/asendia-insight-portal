@@ -322,7 +322,15 @@ function EcdbCard({
       : null;
 
   return (
-    <Card className={low ? "border-amber-500/40 bg-amber-500/5" : ""}>
+    <Card
+      className={
+        critical
+          ? "border-destructive/40 bg-destructive/5"
+          : warning
+            ? "border-amber-500/40 bg-amber-500/5"
+            : ""
+      }
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           API credits
@@ -338,7 +346,7 @@ function EcdbCard({
           ) : bal != null ? (
             <div
               className={`mt-0.5 text-4xl font-semibold tracking-tight tabular-nums ${
-                low ? "text-amber-700" : ""
+                critical ? "text-destructive" : warning ? "text-amber-700" : ""
               }`}
             >
               {nf.format(bal)}
@@ -348,10 +356,15 @@ function EcdbCard({
               Balance available after the first daily check.
             </p>
           )}
-          {!loading && low && (
+          {!loading && critical && (
+            <p className="mt-2 text-xs text-destructive">
+              Below the 1,100 critical threshold — top-up required before the next
+              run.
+            </p>
+          )}
+          {!loading && warning && (
             <p className="mt-2 text-xs text-amber-800">
-              Below the 10,000 alert threshold — top-up recommended before the next
-              monthly run (~1,150 credits per full run).
+              Below the 1,600 warning threshold — plan a top-up.
             </p>
           )}
           {!loading && delta != null && (
