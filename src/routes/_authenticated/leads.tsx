@@ -128,6 +128,9 @@ function statusBadgeClass(status: string) {
       return "bg-chart-4/15 text-chart-4 border-chart-4/40";
     case "discarded":
       return "bg-muted text-muted-foreground border-border";
+    case "excluded":
+      // Neutral slate — an excluded lead is a good lead handled elsewhere.
+      return "bg-slate-500/10 text-slate-500 border-slate-500/30 dark:text-slate-300";
     default:
       return "";
   }
