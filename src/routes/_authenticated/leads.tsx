@@ -510,12 +510,11 @@ function LeadRankingPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className={statusBadgeClass(lead.status)}
-                          >
-                            {STATUS_LABELS[lead.status] ?? lead.status}
-                          </Badge>
+                          <StatusBadge
+                            status={lead.status}
+                            reviewReason={lead.review_reason}
+                          />
+
                           {lead.high_intent_override && (
                             <Tooltip>
                               <TooltipTrigger asChild>
