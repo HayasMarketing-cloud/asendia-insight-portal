@@ -6,6 +6,7 @@ export const STATUS_LABELS: Record<string, string> = {
   mql: "Marketing Qualified",
   discarded: "Discarded",
   manual_review: "Needs review",
+  excluded: "Excluded — open opportunity",
 };
 
 export const INTL_MATURITY_LABELS: Record<string, string> = {
