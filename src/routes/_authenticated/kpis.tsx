@@ -77,10 +77,13 @@ function KpisPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("score_total")
+        .select("score_total, status")
         .eq("account_id", accountId!);
       if (error) throw error;
-      return (data ?? []).map((r) => r.score_total as number | null);
+      return (data ?? []).map((r) => ({
+        score_total: r.score_total as number | null,
+        status: r.status as string,
+      }));
     },
   });
 
