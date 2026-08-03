@@ -105,9 +105,19 @@ function KpisPage() {
   const kpi = kpiQ.data;
   const loading = kpiQ.isLoading || scoresQ.isLoading || runsQ.isLoading;
 
+  // "excluded" leads are open opportunities already worked in SugarCRM.
+  // They are never a conversion outcome, so they leave the denominator.
+  const excludedCount = useMemo(
+    () => (scoresQ.data ?? []).filter((r) => r.status === "excluded").length,
+    [scoresQ.data],
+  );
+
   const total = kpi?.total_leads ?? null;
+  const qualifiedTotal = total == null ? null : Number(total) - excludedCount;
   const pct = (n: number | null | undefined) =>
-    n == null || !total ? null : Math.round((Number(n) / Number(total)) * 100);
+    n == null || !qualifiedTotal
+      ? null
+      : Math.round((Number(n) / qualifiedTotal) * 100);
 
   const runs = runsQ.data ?? [];
   const latestRun = runs.length ? runs[runs.length - 1] : null;
@@ -115,11 +125,12 @@ function KpisPage() {
   const stale = staleDays != null && staleDays > 35;
   const noRuns = !loading && runs.length === 0;
 
-  // Score histogram bins 0..130, width 10.
+  // Score histogram bins 0..130, width 10. Excluded leads keep their score
+  // and stay in this distribution — it is not a conversion metric.
   const histogram = useMemo(() => {
-    const scores = (scoresQ.data ?? []).filter(
-      (s): s is number => s != null,
-    );
+    const scores = (scoresQ.data ?? [])
+      .map((r) => r.score_total)
+      .filter((s): s is number => s != null);
     const bins: { bin: string; from: number; to: number; count: number }[] = [];
     for (let i = 0; i < 130; i += 10) {
       bins.push({
