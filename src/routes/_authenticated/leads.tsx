@@ -186,7 +186,10 @@ function LeadRankingPage() {
     let rows = data ?? [];
     if (statusFilter === "default") {
       rows = rows.filter(
-        (r) => r.status !== "manual_review" && r.status !== "discarded",
+        (r) =>
+          r.status !== "manual_review" &&
+          r.status !== "discarded" &&
+          r.status !== "excluded",
       );
     } else if (statusFilter !== "all") {
       rows = rows.filter((r) => r.status === statusFilter);
