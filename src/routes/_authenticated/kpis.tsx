@@ -77,10 +77,13 @@ function KpisPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select("score_total")
+        .select("score_total, status")
         .eq("account_id", accountId!);
       if (error) throw error;
-      return (data ?? []).map((r) => r.score_total as number | null);
+      return (data ?? []).map((r) => ({
+        score_total: r.score_total as number | null,
+        status: r.status as string,
+      }));
     },
   });
 
@@ -102,9 +105,19 @@ function KpisPage() {
   const kpi = kpiQ.data;
   const loading = kpiQ.isLoading || scoresQ.isLoading || runsQ.isLoading;
 
+  // "excluded" leads are open opportunities already worked in SugarCRM.
+  // They are never a conversion outcome, so they leave the denominator.
+  const excludedCount = useMemo(
+    () => (scoresQ.data ?? []).filter((r) => r.status === "excluded").length,
+    [scoresQ.data],
+  );
+
   const total = kpi?.total_leads ?? null;
+  const qualifiedTotal = total == null ? null : Number(total) - excludedCount;
   const pct = (n: number | null | undefined) =>
-    n == null || !total ? null : Math.round((Number(n) / Number(total)) * 100);
+    n == null || !qualifiedTotal
+      ? null
+      : Math.round((Number(n) / qualifiedTotal) * 100);
 
   const runs = runsQ.data ?? [];
   const latestRun = runs.length ? runs[runs.length - 1] : null;
@@ -112,11 +125,12 @@ function KpisPage() {
   const stale = staleDays != null && staleDays > 35;
   const noRuns = !loading && runs.length === 0;
 
-  // Score histogram bins 0..130, width 10.
+  // Score histogram bins 0..130, width 10. Excluded leads keep their score
+  // and stay in this distribution — it is not a conversion metric.
   const histogram = useMemo(() => {
-    const scores = (scoresQ.data ?? []).filter(
-      (s): s is number => s != null,
-    );
+    const scores = (scoresQ.data ?? [])
+      .map((r) => r.score_total)
+      .filter((s): s is number => s != null);
     const bins: { bin: string; from: number; to: number; count: number }[] = [];
     for (let i = 0; i < 130; i += 10) {
       bins.push({
@@ -134,7 +148,8 @@ function KpisPage() {
   }, [scoresQ.data]);
 
   // Funnel: Scored = non-null score_total (sql+mql+discarded), then MQL, then SQL.
-  // Manual review is a parallel lane.
+  // Manual review is a parallel lane. "excluded" is counted in none of these
+  // three view columns, so it can never enter the funnel.
   const funnel = useMemo(() => {
     const sql = Number(kpi?.sql_count ?? 0);
     const mql = Number(kpi?.mql_count ?? 0);
@@ -195,7 +210,10 @@ function KpisPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total companies scored"
-          primary={total}
+          primary={qualifiedTotal}
+          secondary={
+            excludedCount > 0 ? `${excludedCount} excluded (not counted)` : null
+          }
           loading={loading}
         />
         <KpiCard
@@ -224,6 +242,12 @@ function KpisPage() {
         <ManualReviewCard
           count={kpi?.manual_count}
           percent={pct(kpi?.manual_count)}
+          loading={loading}
+        />
+        <KpiCard
+          label="Excluded"
+          primary={excludedCount}
+          secondary="Excluded: open opportunity already in SugarCRM"
           loading={loading}
         />
         <KpiCard

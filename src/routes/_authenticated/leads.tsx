@@ -113,7 +113,7 @@ type Lead = {
 type SortKey = "company_name" | "score_total" | "status" | "asendia_icp_segment";
 type SortDir = "asc" | "desc";
 
-const STATUS_OPTIONS = ["sql", "mql", "manual_review", "discarded"] as const;
+const STATUS_OPTIONS = ["sql", "mql", "manual_review", "discarded", "excluded"] as const;
 const ICP_OPTIONS = ["icp1", "icp2", "icp3", "out"] as const;
 const INTL_OPTIONS = ["established_icp1", "icp2", "growing", "starting_icp3"] as const;
 const DATA_SOURCE_OPTIONS = ["ecdb", "provisional", "manual"] as const;
@@ -128,6 +128,9 @@ function statusBadgeClass(status: string) {
       return "bg-chart-4/15 text-chart-4 border-chart-4/40";
     case "discarded":
       return "bg-muted text-muted-foreground border-border";
+    case "excluded":
+      // Neutral slate — an excluded lead is a good lead handled elsewhere.
+      return "bg-secondary text-secondary-foreground border-border";
     default:
       return "";
   }
@@ -146,9 +149,43 @@ function dataBadgeClass(tone: "verified" | "confirmed" | "review" | "none") {
   }
 }
 
+/**
+ * Status badge. For "excluded" leads (good leads worked through another
+ * channel) a tooltip surfaces the pipeline's full review_reason.
+ */
+function StatusBadge({
+  status,
+  reviewReason,
+  label,
+}: {
+  status: string;
+  reviewReason: string | null;
+  label?: string;
+}) {
+  const text = label ?? STATUS_LABELS[status] ?? status;
+  const badge = (
+    <Badge variant="outline" className={statusBadgeClass(status)}>
+      {text}
+    </Badge>
+  );
+  if (status !== "excluded") return badge;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{badge}</span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        {reviewReason ?? text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
+
 function LeadRankingPage() {
   const { accountId, account } = useActiveAccount();
-  // Default: exclude manual_review AND discarded (both reachable via filter).
+  // Default: exclude manual_review, discarded AND excluded (all reachable via filter).
   const [statusFilter, setStatusFilter] = useState<string>("default");
   const [icpFilter, setIcpFilter] = useState<string>("all");
   const [intlFilter, setIntlFilter] = useState<string>("all");
@@ -183,7 +220,10 @@ function LeadRankingPage() {
     let rows = data ?? [];
     if (statusFilter === "default") {
       rows = rows.filter(
-        (r) => r.status !== "manual_review" && r.status !== "discarded",
+        (r) =>
+          r.status !== "manual_review" &&
+          r.status !== "discarded" &&
+          r.status !== "excluded",
       );
     } else if (statusFilter !== "all") {
       rows = rows.filter((r) => r.status === statusFilter);
@@ -504,12 +544,11 @@ function LeadRankingPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className={statusBadgeClass(lead.status)}
-                          >
-                            {STATUS_LABELS[lead.status] ?? lead.status}
-                          </Badge>
+                          <StatusBadge
+                            status={lead.status}
+                            reviewReason={lead.review_reason}
+                          />
+
                           {lead.high_intent_override && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -738,7 +777,8 @@ function CrmSyncCell({
   status: string;
   sugarcrmUrl: string | null;
 }) {
-  // MQL / discarded / manual_review are never routed to SugarCRM.
+  // MQL / discarded / manual_review / excluded are never routed to SugarCRM
+  // by the Lead Accelerator — always "—".
   if (status !== "sql") {
     return <span className="text-muted-foreground">—</span>;
   }
@@ -815,9 +855,7 @@ function LeadDetail({
 
       <div className="mt-6 space-y-6 px-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className={statusBadgeClass(lead.status)}>
-            {STATUS_LABELS[lead.status] ?? lead.status}
-          </Badge>
+          <StatusBadge status={lead.status} reviewReason={lead.review_reason} />
           {lead.asendia_icp_segment && (
             <Badge variant="secondary">
               {ICP_LABELS[lead.asendia_icp_segment] ?? lead.asendia_icp_segment}

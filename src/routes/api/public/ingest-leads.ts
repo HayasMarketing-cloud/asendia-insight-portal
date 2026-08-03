@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
-const STATUS = ["sql", "mql", "discarded", "manual_review"] as const;
+const STATUS = ["sql", "mql", "discarded", "manual_review", "excluded"] as const;
 const INTL_MATURITY = ["established_icp1", "icp2", "growing", "starting_icp3"] as const;
 const GROWTH = ["high", "med", "low"] as const;
 const INTENT = ["high", "med", "low", "none"] as const;
