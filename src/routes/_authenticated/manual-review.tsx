@@ -75,6 +75,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   mql: "Added to nurture sequence",
   discarded: "Discarded by score",
   manual_review: "Returned to manual review",
+  excluded: "Excluded — open opportunity",
 };
 
 function outcomeLabel(status: string): string {
