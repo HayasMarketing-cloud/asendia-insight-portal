@@ -245,6 +245,12 @@ function KpisPage() {
           loading={loading}
         />
         <KpiCard
+          label="Excluded"
+          primary={excludedCount}
+          secondary="Excluded: open opportunity already in SugarCRM"
+          loading={loading}
+        />
+        <KpiCard
           label="ECDB coverage"
           primary={
             kpi?.coverage_rate_pct != null
