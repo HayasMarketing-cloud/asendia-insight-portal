@@ -151,7 +151,7 @@ function dataBadgeClass(tone: "verified" | "confirmed" | "review" | "none") {
 
 function LeadRankingPage() {
   const { accountId, account } = useActiveAccount();
-  // Default: exclude manual_review AND discarded (both reachable via filter).
+  // Default: exclude manual_review, discarded AND excluded (all reachable via filter).
   const [statusFilter, setStatusFilter] = useState<string>("default");
   const [icpFilter, setIcpFilter] = useState<string>("all");
   const [intlFilter, setIntlFilter] = useState<string>("all");
