@@ -854,9 +854,7 @@ function LeadDetail({
 
       <div className="mt-6 space-y-6 px-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className={statusBadgeClass(lead.status)}>
-            {STATUS_LABELS[lead.status] ?? lead.status}
-          </Badge>
+          <StatusBadge status={lead.status} reviewReason={lead.review_reason} />
           {lead.asendia_icp_segment && (
             <Badge variant="secondary">
               {ICP_LABELS[lead.asendia_icp_segment] ?? lead.asendia_icp_segment}
