@@ -777,7 +777,8 @@ function CrmSyncCell({
   status: string;
   sugarcrmUrl: string | null;
 }) {
-  // MQL / discarded / manual_review are never routed to SugarCRM.
+  // MQL / discarded / manual_review / excluded are never routed to SugarCRM
+  // by the Lead Accelerator — always "—".
   if (status !== "sql") {
     return <span className="text-muted-foreground">—</span>;
   }
