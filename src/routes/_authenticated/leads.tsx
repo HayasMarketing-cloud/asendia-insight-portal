@@ -113,7 +113,7 @@ type Lead = {
 type SortKey = "company_name" | "score_total" | "status" | "asendia_icp_segment";
 type SortDir = "asc" | "desc";
 
-const STATUS_OPTIONS = ["sql", "mql", "manual_review", "discarded"] as const;
+const STATUS_OPTIONS = ["sql", "mql", "manual_review", "discarded", "excluded"] as const;
 const ICP_OPTIONS = ["icp1", "icp2", "icp3", "out"] as const;
 const INTL_OPTIONS = ["established_icp1", "icp2", "growing", "starting_icp3"] as const;
 const DATA_SOURCE_OPTIONS = ["ecdb", "provisional", "manual"] as const;
