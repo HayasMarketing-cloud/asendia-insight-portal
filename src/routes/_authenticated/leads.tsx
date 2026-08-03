@@ -149,6 +149,40 @@ function dataBadgeClass(tone: "verified" | "confirmed" | "review" | "none") {
   }
 }
 
+/**
+ * Status badge. For "excluded" leads (good leads worked through another
+ * channel) a tooltip surfaces the pipeline's full review_reason.
+ */
+function StatusBadge({
+  status,
+  reviewReason,
+  label,
+}: {
+  status: string;
+  reviewReason: string | null;
+  label?: string;
+}) {
+  const text = label ?? STATUS_LABELS[status] ?? status;
+  const badge = (
+    <Badge variant="outline" className={statusBadgeClass(status)}>
+      {text}
+    </Badge>
+  );
+  if (status !== "excluded") return badge;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{badge}</span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        {reviewReason ?? text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
+
 function LeadRankingPage() {
   const { accountId, account } = useActiveAccount();
   // Default: exclude manual_review, discarded AND excluded (all reachable via filter).
