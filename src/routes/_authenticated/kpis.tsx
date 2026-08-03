@@ -148,7 +148,8 @@ function KpisPage() {
   }, [scoresQ.data]);
 
   // Funnel: Scored = non-null score_total (sql+mql+discarded), then MQL, then SQL.
-  // Manual review is a parallel lane.
+  // Manual review is a parallel lane. "excluded" is counted in none of these
+  // three view columns, so it can never enter the funnel.
   const funnel = useMemo(() => {
     const sql = Number(kpi?.sql_count ?? 0);
     const mql = Number(kpi?.mql_count ?? 0);
